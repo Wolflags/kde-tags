@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Id": "com.josej.kdetags",
+        "Name": "kde-tags",
+        "Description": "Solicita la presencia de tus compañeros o envíales mensajes vía ntfy",
+        "Icon": "dialog-messages",
+        "Category": "Utilities",
+        "License": "GPL-2.0+",
+        "Version": "2.0",
+        "Authors": [
+            {
+                "Name": "Jose",
+                "Email": "joserafaelrey45@gmail.com"
+            }
+        ],
+        "ServiceTypes": [
+            "Plasma/Applet"
+        ]
+    },
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-MainScript": "ui/main.qml",
+    "KPackageStructure": "Plasma/Applet"
+}

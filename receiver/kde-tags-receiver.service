@@ -1,0 +1,10 @@
+[Unit]
+Description=kde-tags - receptor de avisos ntfy
+
+[Service]
+ExecStart=@NTFY_BIN@ subscribe --config %h/.config/kde-tags/client.yml --from-config
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
