@@ -41,7 +41,11 @@ kpackagetool5 -t Plasma/Applet -u package
 systemctl --user restart plasma-plasmashell.service
 ```
 
-Luego: clic derecho en el panel → *Añadir elementos gráficos* → **kde-tags**.
+Tras reiniciar plasmashell, el icono de kde-tags aparece **automáticamente en
+la bandeja del sistema** (la zona de red, volumen, bluetooth). Si no lo ves:
+clic derecho en la bandeja → *Configurar Bandeja del sistema* → *Entradas* →
+kde-tags. También puede usarse como widget suelto (clic derecho en el panel →
+*Añadir elementos gráficos* → **kde-tags**).
 
 ## 3. Instalar el receptor (quien recibe avisos)
 
@@ -98,11 +102,15 @@ Notas:
 
 ## Uso
 
-1. Clic en el icono de chat del panel → se abre el popup.
-2. Clic en un compañero para seleccionarlo (se resalta; otro clic lo deselecciona).
-3. Botón **Solicitar presencia** (aviso prioritario fijo) o escribe un texto y
+1. Clic en el icono de chat de la bandeja → se abre el popup.
+2. Si son muchos, escribe en el **buscador** (tiene el foco al abrir; filtra por
+   nombre, sin distinguir mayúsculas ni acentos). Enter con un único resultado
+   lo selecciona y salta al campo de mensaje. Con muchas personas la cuadrícula
+   se limita a 4 columnas y hace scroll vertical.
+3. Clic en un compañero para seleccionarlo (se resalta; otro clic lo deselecciona).
+4. Botón **Solicitar presencia** (aviso prioritario fijo) o escribe un texto y
    **Enviar mensaje** (Enter en el campo también envía).
-4. La celda muestra el resultado: giratorio → ✓ (aceptado por el servidor) o
+5. La celda muestra el resultado: giratorio → ✓ (aceptado por el servidor) o
    rojo + error (sin red, servidor mal, timeout de 10 s). El borrador solo se
    borra si el envío tuvo éxito.
 

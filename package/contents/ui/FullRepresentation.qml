@@ -1,6 +1,6 @@
 /*
-    Popup de kde-tags: cuadrícula de compañeros estilo escritorios múltiples,
-    campo de mensaje y botones de acción.
+    Popup de kde-tags: buscador, cuadrícula de compañeros estilo escritorios
+    múltiples con scroll, campo de mensaje y botones de acción.
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
@@ -17,16 +17,48 @@ PlasmaExtras.Representation {
 
     readonly property int cellWidth: PlasmaCore.Units.gridUnit * 6
     readonly property int cellHeight: Math.round(cellWidth / 1.6)
-    readonly property int gridColumns: Math.max(1, Math.ceil(Math.sqrt(root.count)))
-    readonly property int gridRows: Math.max(1, Math.ceil(root.count / gridColumns))
 
-    property int selectedIndex: -1
-    readonly property var selectedCoworker: selectedIndex >= 0 && selectedIndex < root.count
-        ? root.roster[selectedIndex]
-        : null
+    // Filtro insensible a mayúsculas y acentos.
+    function norm(s) {
+        return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    }
+
+    readonly property var shownRoster: {
+        const q = norm(searchField.text.trim());
+        if (q === "") {
+            return root.roster;
+        }
+        return root.roster.filter(function (c) {
+            return norm(c.name || "").indexOf(q) !== -1;
+        });
+    }
+
+    // La geometría se calcula sobre el roster completo (no el filtrado) para
+    // que el popup no cambie de tamaño mientras se escribe en el buscador.
+    readonly property int gridColumns: Math.max(1, Math.min(4, Math.ceil(Math.sqrt(root.count))))
+    readonly property int gridRowsAll: Math.max(1, Math.ceil(root.count / gridColumns))
+
+    // Selección por topic: sobrevive al filtrado y a reordenados del roster.
+    property string selectedTopic: ""
+    readonly property var selectedCoworker: {
+        if (selectedTopic === "") {
+            return null;
+        }
+        for (let i = 0; i < root.roster.length; ++i) {
+            if (String(root.roster[i].topic || "").trim() === selectedTopic) {
+                return root.roster[i];
+            }
+        }
+        return null; // el seleccionado ya no está en el roster
+    }
 
     function selectedCell() {
-        return repeater.itemAt(selectedIndex); // puede ser null: siempre con guard
+        for (let i = 0; i < shownRoster.length; ++i) {
+            if (String(shownRoster[i].topic || "").trim() === selectedTopic) {
+                return repeater.itemAt(i); // puede ser null: siempre con guard
+            }
+        }
+        return null; // seleccionado pero filtrado: sin feedback visible
     }
 
     collapseMarginsHint: true
@@ -35,26 +67,21 @@ PlasmaExtras.Representation {
     Layout.minimumWidth: PlasmaCore.Units.gridUnit * 14
     Layout.preferredWidth: Math.max(Layout.minimumWidth,
         gridColumns * cellWidth + (gridColumns + 3) * PlasmaCore.Units.smallSpacing)
-    Layout.maximumWidth: PlasmaCore.Units.gridUnit * 24
+    Layout.maximumWidth: PlasmaCore.Units.gridUnit * 26
     Layout.minimumHeight: PlasmaCore.Units.gridUnit * 10
     Layout.preferredHeight: Math.min(Layout.maximumHeight, Math.max(Layout.minimumHeight,
-        gridRows * cellHeight + (gridRows + 3) * PlasmaCore.Units.smallSpacing
+        Math.min(gridRowsAll, 4) * (cellHeight + PlasmaCore.Units.smallSpacing)
+        + PlasmaCore.Units.smallSpacing * 3
         + (header ? header.implicitHeight : 0) + (footer ? footer.implicitHeight : 0)))
-    Layout.maximumHeight: PlasmaCore.Units.gridUnit * 24
+    Layout.maximumHeight: PlasmaCore.Units.gridUnit * 26
 
-    // Al abrir el popup se limpia la selección (observador de propiedad:
+    // Al abrir el popup: limpiar búsqueda y selección (observador de propiedad:
     // Connections sobre Plasmoid no resuelve expandedChanged en Plasma 5).
     readonly property bool popupExpanded: Plasmoid.expanded
     onPopupExpandedChanged: {
         if (popupExpanded) {
-            selectedIndex = -1;
-        }
-    }
-
-    Connections {
-        target: root
-        function onRosterChanged() {
-            fullRep.selectedIndex = -1;
+            selectedTopic = "";
+            searchField.text = "";
         }
     }
 
@@ -62,10 +89,20 @@ PlasmaExtras.Representation {
         contentItem: RowLayout {
             spacing: PlasmaCore.Units.smallSpacing
 
-            PlasmaExtras.Heading {
+            PlasmaExtras.SearchField {
+                id: searchField
+
                 Layout.fillWidth: true
-                level: 3
-                text: "kde-tags"
+                placeholderText: "Buscar compañero…"
+                // Se re-evalúa en cada apertura → el buscador recibe el foco
+                focus: Plasmoid.expanded
+                onAccepted: {
+                    // Enter con un único resultado: seleccionarlo y pasar al mensaje
+                    if (fullRep.shownRoster.length === 1) {
+                        fullRep.selectedTopic = String(fullRep.shownRoster[0].topic || "").trim();
+                        messageField.forceActiveFocus();
+                    }
+                }
             }
 
             PlasmaComponents3.ToolButton {
@@ -80,24 +117,42 @@ PlasmaExtras.Representation {
     Item {
         anchors.fill: parent
 
-        Grid {
-            anchors.centerIn: parent
-            visible: root.count > 0
-            columns: fullRep.gridColumns
-            spacing: PlasmaCore.Units.smallSpacing
+        PlasmaComponents3.ScrollView {
+            id: scroll
 
-            Repeater {
-                id: repeater
+            anchors.fill: parent
+            visible: fullRep.shownRoster.length > 0
+            contentWidth: availableWidth // solo scroll vertical
 
-                model: root.roster
+            Item {
+                width: scroll.availableWidth
+                implicitHeight: grid.height + PlasmaCore.Units.smallSpacing * 2
 
-                PersonCell {
-                    width: fullRep.cellWidth
-                    height: fullRep.cellHeight
-                    coworker: modelData
-                    selected: index === fullRep.selectedIndex
-                    onActivated: fullRep.selectedIndex =
-                        (fullRep.selectedIndex === index ? -1 : index)
+                Grid {
+                    id: grid
+
+                    anchors.top: parent.top
+                    anchors.topMargin: PlasmaCore.Units.smallSpacing
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    columns: fullRep.gridColumns
+                    spacing: PlasmaCore.Units.smallSpacing
+
+                    Repeater {
+                        id: repeater
+
+                        model: fullRep.shownRoster
+
+                        PersonCell {
+                            width: fullRep.cellWidth
+                            height: fullRep.cellHeight
+                            coworker: modelData
+                            selected: String(modelData.topic || "").trim() === fullRep.selectedTopic
+                            onActivated: {
+                                const t = String(modelData.topic || "").trim();
+                                fullRep.selectedTopic = (fullRep.selectedTopic === t ? "" : t);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -114,6 +169,14 @@ PlasmaExtras.Representation {
                 onTriggered: Plasmoid.action("configure").trigger()
             }
         }
+
+        PlasmaExtras.PlaceholderMessage {
+            anchors.centerIn: parent
+            width: parent.width - PlasmaCore.Units.gridUnit * 2
+            visible: root.count > 0 && fullRep.shownRoster.length === 0
+            iconName: "edit-none"
+            text: "Sin resultados"
+        }
     }
 
     footer: PlasmaExtras.PlasmoidHeading {
@@ -125,8 +188,6 @@ PlasmaExtras.Representation {
 
                 Layout.fillWidth: true
                 placeholderText: "Mensaje (opcional, para \"Enviar mensaje\")"
-                // Se re-evalúa en cada apertura del popup → el campo recupera el foco
-                focus: Plasmoid.expanded
                 onAccepted: {
                     if (sendButton.enabled) {
                         sendButton.clicked();
@@ -149,6 +210,9 @@ PlasmaExtras.Representation {
                         const cell = fullRep.selectedCell();
                         if (cell) {
                             root.requestPresence(fullRep.selectedCoworker, cell);
+                        } else if (fullRep.selectedCoworker) {
+                            // seleccionado pero filtrado de la vista: enviar sin feedback de celda
+                            root.requestPresence(fullRep.selectedCoworker, dummyCell);
                         }
                     }
                 }
@@ -162,10 +226,10 @@ PlasmaExtras.Representation {
                     enabled: fullRep.selectedCoworker !== null
                              && messageField.text.trim().length > 0
                     onClicked: {
-                        const cell = fullRep.selectedCell();
-                        if (cell) {
+                        const target = fullRep.selectedCell() || dummyCell;
+                        if (fullRep.selectedCoworker) {
                             root.sendMessage(fullRep.selectedCoworker,
-                                messageField.text.trim(), cell,
+                                messageField.text.trim(), target,
                                 function (ok) {
                                     if (ok) {
                                         messageField.text = "";
@@ -175,6 +239,39 @@ PlasmaExtras.Representation {
                     }
                 }
             }
+        }
+    }
+
+    // Receptor de callbacks cuando la celda seleccionada está filtrada de la
+    // vista: implementa la misma interfaz mínima que PersonCell.
+    QtObject {
+        id: dummyCell
+
+        property string callState: "idle"
+        property var activeXhr: null
+
+        function beginCall(xhr) {
+            activeXhr = xhr;
+            callState = "sending";
+            dummyTimeout.restart();
+        }
+
+        function finishCall(ok) {
+            dummyTimeout.stop();
+            activeXhr = null;
+            callState = "idle";
+        }
+    }
+
+    Timer {
+        id: dummyTimeout
+
+        interval: 10000
+        onTriggered: {
+            if (dummyCell.activeXhr) {
+                dummyCell.activeXhr.abort();
+            }
+            dummyCell.finishCall(false);
         }
     }
 }

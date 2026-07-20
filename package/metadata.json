@@ -17,6 +17,8 @@
             "Plasma/Applet"
         ]
     },
+    "X-Plasma-NotificationArea": "true",
+    "X-Plasma-NotificationAreaCategory": "Communications",
     "X-Plasma-API": "declarativeappletscript",
     "X-Plasma-MainScript": "ui/main.qml",
     "KPackageStructure": "Plasma/Applet"
