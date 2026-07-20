@@ -140,6 +140,28 @@ Item {
         discoverySource.connectSource(discoverCmd);
     }
 
+    // avahi-browse -p escapa los bytes no-ASCII como \nnn (decimal) incluso
+    // dentro del TXT ("ó" llega como \195\179): reconstruir y decodificar UTF-8.
+    function unescapeAvahi(s) {
+        let pct = "";
+        for (let i = 0; i < s.length; ++i) {
+            const c = s.charAt(i);
+            if (c === "\\" && /^[0-9]{3}$/.test(s.substr(i + 1, 3))) {
+                pct += "%" + ("0" + parseInt(s.substr(i + 1, 3), 10).toString(16)).slice(-2);
+                i += 3;
+            } else if (c === "%") {
+                pct += "%25";
+            } else {
+                pct += c;
+            }
+        }
+        try {
+            return decodeURIComponent(pct);
+        } catch (e) {
+            return s; // secuencia malformada: mejor el texto crudo que nada
+        }
+    }
+
     function applyDiscovery(out) {
         let self = "";
         const found = {};
@@ -166,7 +188,7 @@ Item {
             while ((m = re.exec(txt)) !== null) {
                 const eq = m[1].indexOf("=");
                 if (eq > 0) {
-                    kv[m[1].slice(0, eq)] = m[1].slice(eq + 1);
+                    kv[m[1].slice(0, eq)] = unescapeAvahi(m[1].slice(eq + 1));
                 }
             }
             const topic = String(kv.topic || "").trim();
