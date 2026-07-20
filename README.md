@@ -12,37 +12,43 @@ Requiere Plasma 5 (desarrollado y probado en 5.27 / Qt 5.15).
 
 Repositorio: **https://github.com/Wolflags/kde-tags**
 
-```sh
-git clone https://github.com/Wolflags/kde-tags.git
-```
-
 ## Estructura
 
 - `package/` — el plasmoide (`com.josej.kdetags`): QML + config.
 - `receiver/` — lo que instala cada compañero para recibir avisos (ntfy + notify-send + servicio systemd de usuario). Ver `receiver/README.md`.
 
-## Instalar / actualizar el widget
+## 1. Descargar
+
+Todo parte de clonar este repositorio (vale tanto para instalar el widget como el receptor):
+
+```sh
+git clone https://github.com/Wolflags/kde-tags.git
+cd kde-tags
+```
+
+## 2. Instalar el widget (quien envía avisos)
+
+Desde la carpeta clonada:
 
 ```sh
 # primera vez
-kpackagetool5 -t Plasma/Applet -i ~/kde-tags/package
+kpackagetool5 -t Plasma/Applet -i package
 
-# tras editar archivos
-kpackagetool5 -t Plasma/Applet -u ~/kde-tags/package
+# para actualizar (tras un git pull o editar archivos)
+kpackagetool5 -t Plasma/Applet -u package
 
-# Plasma cachea el QML: reiniciar plasmashell tras cada cambio
+# Plasma cachea el QML: reiniciar plasmashell tras instalar/actualizar
 systemctl --user restart plasma-plasmashell.service
 ```
 
 Luego: clic derecho en el panel → *Añadir elementos gráficos* → **kde-tags**.
 
-## Instalar el receptor (cada compañero)
+## 3. Instalar el receptor (quien recibe avisos)
 
-Quien quiera **recibir** avisos ejecuta en su máquina Linux:
+Desde la carpeta clonada, en la máquina de cada compañero:
 
 ```sh
-git clone https://github.com/Wolflags/kde-tags.git
-cd kde-tags/receiver
+cd receiver
 ./install-receiver.sh
 ```
 
