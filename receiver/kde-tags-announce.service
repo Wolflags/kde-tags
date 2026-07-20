@@ -1,5 +1,5 @@
 [Unit]
-Description=kde-tags - anuncio mDNS (_kdetags._tcp) en la red local
+Description=kde-tags - mDNS announcement (_kdetags._tcp) on the local network
 
 [Service]
 ExecStart=@AVAHI_PUBLISH@ -s "@INSTANCE@" _kdetags._tcp 1 "name=@NAME@" "topic=@TOPIC@" "server=@SERVER@"

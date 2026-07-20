@@ -6,19 +6,19 @@
     <kcfgfile name=""/>
     <group name="General">
         <entry name="serverUrl" type="String">
-            <label>URL base del servidor ntfy.</label>
+            <label>Base URL of the ntfy server.</label>
             <default>https://ntfy.sh</default>
         </entry>
         <entry name="senderName" type="String">
-            <label>Nombre con el que te verán tus compañeros.</label>
+            <label>Name your coworkers will see.</label>
             <default></default>
         </entry>
         <entry name="coworkers" type="String">
-            <label>Lista de compañeros como array JSON de objetos {name, topic}.</label>
+            <label>Coworker list as a JSON array of {name, topic} objects.</label>
             <default>[]</default>
         </entry>
         <entry name="lanDiscovery" type="Bool">
-            <label>Descubrir compañeros automáticamente en la red local (mDNS).</label>
+            <label>Discover coworkers automatically on the local network (mDNS).</label>
             <default>true</default>
         </entry>
     </group>

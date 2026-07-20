@@ -1,5 +1,5 @@
 /*
-    Icono del panel: alterna el popup al hacer clic.
+    Panel icon: toggles the popup on click.
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
@@ -10,8 +10,8 @@ import org.kde.plasma.core 2.0 as PlasmaCore
 MouseArea {
     id: compactRoot
 
-    // Capturado en onPressed: el popup se auto-cierra al perder el foco,
-    // así el clic con popup abierto lo cierra en vez de reabrirlo.
+    // Captured in onPressed: the popup auto-closes when it loses focus, so a
+    // click while it is open should close it instead of reopening it.
     property bool wasExpanded: false
 
     anchors.fill: parent

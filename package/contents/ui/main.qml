@@ -1,5 +1,5 @@
 /*
-    kde-tags — solicita presencia o envía mensajes a compañeros vía ntfy.
+    kde-tags — request a coworker's presence or send them messages via ntfy.
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
@@ -19,11 +19,11 @@ Item {
         }
     }
 
-    // Compañeros anunciados por mDNS en la red local (rellenado por discoverySource).
+    // Coworkers announced via mDNS on the local network (filled by discoverySource).
     property var discovered: []
 
-    // Lista final: manuales primero; ante topic duplicado gana la entrada manual
-    // (permite renombrar a alguien descubierto).
+    // Final list: manual entries first; on duplicate topics the manual entry
+    // wins (lets you rename a discovered coworker).
     readonly property var roster: {
         const seen = {};
         const out = [];
@@ -45,15 +45,15 @@ Item {
     Plasmoid.icon: "dialog-messages"
     Plasmoid.toolTipMainText: "kde-tags"
     Plasmoid.toolTipSubText: count === 0
-        ? "Configúrame"
-        : (count === 1 ? "1 compañero" : count + " compañeros")
+        ? "Configure me"
+        : (count === 1 ? "1 coworker" : count + " coworkers")
 
     function senderName() {
-        return String(Plasmoid.configuration.senderName || "").trim() || "Un compañero";
+        return String(Plasmoid.configuration.senderName || "").trim() || "A coworker";
     }
 
-    // ntfy lee las cabeceras como latin-1: títulos/tags solo ASCII,
-    // el texto con UTF-8 (nombres, acentos) viaja en el cuerpo.
+    // ntfy reads headers as latin-1: titles/tags must stay ASCII, while
+    // UTF-8 text (names, accents) travels in the body.
     function sendNtfy(topic, title, tags, priority, body, cell, onDone) {
         if (cell.callState === "sending") {
             return;
@@ -79,7 +79,7 @@ Item {
             if (xhr.readyState !== XMLHttpRequest.DONE) {
                 return;
             }
-            // fallo de red/abort = status 0
+            // network failure/abort = status 0
             const ok = xhr.status >= 200 && xhr.status < 300;
             cell.finishCall(ok);
             if (onDone) {
@@ -98,19 +98,19 @@ Item {
     }
 
     function requestPresence(coworker, cell, onDone) {
-        sendNtfy(coworker.topic, "Solicitud de presencia", "wave", "high",
-                 senderName() + " solicita tu presencia en su escritorio", cell, onDone);
+        sendNtfy(coworker.topic, "Presence request", "wave", "high",
+                 senderName() + " is requesting your presence at their desk", cell, onDone);
     }
 
     function sendMessage(coworker, text, cell, onDone) {
-        sendNtfy(coworker.topic, "Mensaje nuevo", "speech_balloon", "",
+        sendNtfy(coworker.topic, "New message", "speech_balloon", "",
                  senderName() + ": " + text, cell, onDone);
     }
 
-    // --- Descubrimiento mDNS (Avahi) en la red local ---
+    // --- mDNS (Avahi) discovery on the local network ---
 
-    // Un solo viaje: primera línea = topic propio (para excluirse), resto =
-    // volcado one-shot de avahi-browse. exit 127 = avahi-browse no instalado.
+    // One round-trip: first line = own topic (to exclude yourself), rest =
+    // one-shot avahi-browse dump. exit 127 = avahi-browse not installed.
     readonly property string discoverCmd:
         "echo \"SELF:$(awk '/- topic:/{print $3; exit}' \"$HOME/.config/kde-tags/client.yml\" 2>/dev/null)\"; "
         + "avahi-browse -rtp _kdetags._tcp 2>/dev/null"
@@ -121,7 +121,7 @@ Item {
         engine: "executable"
         connectedSources: []
         onNewData: (sourceName, data) => {
-            disconnectSource(sourceName); // imprescindible para poder relanzar el mismo comando
+            disconnectSource(sourceName); // required to be able to re-run the same command
             if (data["exit code"] === 127) {
                 root.discovered = [];
                 return;
@@ -135,13 +135,13 @@ Item {
             return;
         }
         if (discoverySource.connectedSources.length > 0) {
-            return; // ya hay un escaneo en marcha
+            return; // a scan is already running
         }
         discoverySource.connectSource(discoverCmd);
     }
 
-    // avahi-browse -p escapa los bytes no-ASCII como \nnn (decimal) incluso
-    // dentro del TXT ("ó" llega como \195\179): reconstruir y decodificar UTF-8.
+    // avahi-browse -p escapes non-ASCII bytes as \nnn (decimal) even inside
+    // TXT records ("ó" arrives as \195\179): rebuild the bytes and decode UTF-8.
     function unescapeAvahi(s) {
         let pct = "";
         for (let i = 0; i < s.length; ++i) {
@@ -158,7 +158,7 @@ Item {
         try {
             return decodeURIComponent(pct);
         } catch (e) {
-            return s; // secuencia malformada: mejor el texto crudo que nada
+            return s; // malformed sequence: raw text is better than nothing
         }
     }
 
@@ -179,8 +179,8 @@ Item {
             if (parts.length < 10) {
                 continue;
             }
-            // El TXT (campo 9 en adelante) puede contener ';': se re-une y se
-            // extraen los pares "clave=valor" entre comillas con regex.
+            // TXT (field 9 onwards) may contain ';': re-join and extract the
+            // quoted "key=value" pairs with a regex, never a naive split.
             const txt = parts.slice(9).join(";");
             const kv = {};
             const re = /"([^"]*)"/g;
@@ -193,7 +193,7 @@ Item {
             }
             const topic = String(kv.topic || "").trim();
             if (topic === "" || topic === self || found[topic]) {
-                continue; // sin topic, uno mismo, o duplicado IPv4/IPv6/interfaz
+                continue; // no topic, self, or IPv4/IPv6/interface duplicate
             }
             found[topic] = {
                 name: String(kv.name || "").trim() || topic,
@@ -203,14 +203,14 @@ Item {
         }
         const list = Object.keys(found).map(function (t) { return found[t]; })
             .sort(function (a, b) { return a.name.localeCompare(b.name); });
-        // Sin cambios reales => no tocar la lista (evita resetear la selección).
+        // No real changes => leave the list alone (avoids resetting the selection).
         if (JSON.stringify(list) !== JSON.stringify(discovered)) {
             discovered = list;
         }
     }
 
-    // Observadores de propiedad (Connections sobre Plasmoid/configuration no
-    // resuelve estas señales en Plasma 5).
+    // Property observers (Connections on Plasmoid/configuration cannot
+    // resolve these signals in Plasma 5).
     readonly property bool popupExpanded: Plasmoid.expanded
     onPopupExpandedChanged: {
         if (popupExpanded) {

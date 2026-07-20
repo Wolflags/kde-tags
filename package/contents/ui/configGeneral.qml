@@ -9,7 +9,7 @@ ColumnLayout {
     property alias cfg_serverUrl: serverField.text
     property alias cfg_senderName: senderField.text
     property alias cfg_lanDiscovery: lanDiscoveryBox.checked
-    // Se guarda como string JSON: [{"name": ..., "topic": ...}, ...]
+    // Stored as a JSON string: [{"name": ..., "topic": ...}, ...]
     property string cfg_coworkers
 
     spacing: Kirigami.Units.largeSpacing
@@ -48,42 +48,42 @@ ColumnLayout {
         QQC2.TextField {
             id: serverField
 
-            Kirigami.FormData.label: "Servidor ntfy:"
+            Kirigami.FormData.label: "ntfy server:"
             placeholderText: "https://ntfy.sh"
         }
 
         QQC2.TextField {
             id: senderField
 
-            Kirigami.FormData.label: "Tu nombre:"
-            placeholderText: "Cómo te verán tus compañeros"
+            Kirigami.FormData.label: "Your name:"
+            placeholderText: "How your coworkers will see you"
         }
 
         QQC2.CheckBox {
             id: lanDiscoveryBox
 
-            Kirigami.FormData.label: "Red local:"
-            text: "Descubrir compañeros automáticamente (mDNS)"
+            Kirigami.FormData.label: "Local network:"
+            text: "Discover coworkers automatically (mDNS)"
         }
     }
 
     Kirigami.Heading {
         level: 2
-        text: "Compañeros"
+        text: "Coworkers"
     }
 
     QQC2.Label {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         opacity: 0.7
-        text: "¿De dónde sale el topic? Cada compañero ejecuta el instalador del receptor "
-              + "(carpeta receiver/ del proyecto: ./install-receiver.sh) en su PC. Al terminar, "
-              + "el script imprime su topic personal (p. ej. kde-tags-ana-x7k2m9q4pz): pídeselo y "
-              + "pégalo aquí junto a su nombre. También puede elegir uno propio ejecutando "
-              + "./install-receiver.sh --topic el-topic-que-quiera. Con el descubrimiento en red "
-              + "local activado, quienes instalen el receptor en tu misma red aparecen solos en el "
-              + "widget (esta lista manual sirve para gente fuera de la LAN, o para renombrar a "
-              + "alguien descubierto añadiéndolo con el mismo topic)."
+        text: "Where does the topic come from? Each coworker runs the receiver installer "
+              + "(the project's receiver/ folder: ./install-receiver.sh) on their PC. When it "
+              + "finishes, the script prints their personal topic (e.g. kde-tags-ana-x7k2m9q4pz): "
+              + "ask them for it and paste it here next to their name. They can also pick their "
+              + "own by running ./install-receiver.sh --topic whatever-they-want. With local "
+              + "network discovery enabled, anyone who installs the receiver on your network "
+              + "shows up in the widget automatically (this manual list is for people outside "
+              + "the LAN, or to rename a discovered coworker by adding them with the same topic)."
     }
 
     ListView {
@@ -102,7 +102,7 @@ ColumnLayout {
             QQC2.TextField {
                 Layout.fillWidth: true
                 text: model.name
-                placeholderText: "Nombre"
+                placeholderText: "Name"
                 onEditingFinished: {
                     coworkerModel.setProperty(index, "name", text);
                     page.save();
@@ -112,7 +112,7 @@ ColumnLayout {
             QQC2.TextField {
                 Layout.fillWidth: true
                 text: model.topic
-                placeholderText: "Topic de ntfy"
+                placeholderText: "ntfy topic"
                 onEditingFinished: {
                     coworkerModel.setProperty(index, "topic", text);
                     page.save();
@@ -125,7 +125,7 @@ ColumnLayout {
                     coworkerModel.remove(index);
                     page.save();
                 }
-                QQC2.ToolTip.text: "Eliminar"
+                QQC2.ToolTip.text: "Remove"
                 QQC2.ToolTip.visible: hovered
             }
         }
@@ -139,19 +139,19 @@ ColumnLayout {
             id: newName
 
             Layout.fillWidth: true
-            placeholderText: "Nombre"
+            placeholderText: "Name"
         }
 
         QQC2.TextField {
             id: newTopic
 
             Layout.fillWidth: true
-            placeholderText: "Topic de ntfy (p. ej. kde-tags-ana-x7k2m9q4pz)"
+            placeholderText: "ntfy topic (e.g. kde-tags-ana-x7k2m9q4pz)"
         }
 
         QQC2.Button {
             icon.name: "list-add"
-            text: "Añadir"
+            text: "Add"
             enabled: newName.text.trim().length > 0 && newTopic.text.trim().length > 0
             onClicked: {
                 coworkerModel.append({
@@ -170,7 +170,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         opacity: 0.7
-        text: "El topic funciona como una contraseña: cualquiera que lo conozca puede enviar y leer avisos. Usa topics con sufijo aleatorio (el instalador los genera así) y compártelos solo con el equipo."
+        text: "The topic works like a password: anyone who knows it can send and read notifications. Use randomly-suffixed topics (the installer generates them that way) and share them only within your team."
     }
 
     Item {

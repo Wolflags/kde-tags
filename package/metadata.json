@@ -2,7 +2,7 @@
     "KPlugin": {
         "Id": "com.josej.kdetags",
         "Name": "kde-tags",
-        "Description": "Solicita la presencia de tus compañeros o envíales mensajes vía ntfy",
+        "Description": "Request a coworker's presence or send them messages via ntfy",
         "Icon": "dialog-messages",
         "Category": "Utilities",
         "License": "GPL-2.0+",

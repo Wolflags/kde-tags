@@ -1,6 +1,6 @@
 /*
-    Celda de compañero: rectángulo "vidrio" semitransparente con iniciales y
-    nombre; seleccionable (resaltada como el escritorio activo del Pager).
+    Coworker cell: translucent "glass" rectangle with initials and name;
+    selectable (highlighted like the Pager's active desktop).
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
@@ -16,7 +16,7 @@ PlasmaCore.ToolTipArea {
     property bool selected: false
     signal activated()
 
-    // Estado del envío (idle | sending | sent | error), con feedback en la celda.
+    // Send state (idle | sending | sent | error), with feedback on the cell.
     property string callState: "idle"
     property var activeXhr: null
 
@@ -37,9 +37,9 @@ PlasmaCore.ToolTipArea {
 
     mainText: coworkerName
     subText: callState === "error"
-        ? "No se pudo enviar"
-        : (discovered ? "Detectado en la red local · " : "")
-          + (selected ? "Seleccionado" : "Clic para seleccionar")
+        ? "Could not send"
+        : (discovered ? "Detected on local network · " : "")
+          + (selected ? "Selected" : "Click to select")
 
     function beginCall(xhr) {
         activeXhr = xhr;
@@ -65,7 +65,7 @@ PlasmaCore.ToolTipArea {
         onTriggered: {
             const xhr = cell.activeXhr;
             if (xhr) {
-                xhr.abort(); // dispara DONE con status 0 → finishCall(false)
+                xhr.abort(); // fires DONE with status 0 → finishCall(false)
             }
             cell.finishCall(false);
         }
@@ -78,7 +78,7 @@ PlasmaCore.ToolTipArea {
     }
 
     Rectangle {
-        // vidrio
+        // glass
         anchors.fill: parent
         z: 1
         radius: PlasmaCore.Units.smallSpacing
@@ -99,7 +99,7 @@ PlasmaCore.ToolTipArea {
     }
 
     Rectangle {
-        // tinte de error
+        // error tint
         anchors.fill: parent
         z: 2
         radius: PlasmaCore.Units.smallSpacing
@@ -165,7 +165,7 @@ PlasmaCore.ToolTipArea {
         hoverEnabled: true
         activeFocusOnTab: true
         cursorShape: Qt.PointingHandCursor
-        Accessible.name: "Seleccionar a " + cell.coworkerName
+        Accessible.name: "Select " + cell.coworkerName
         Accessible.role: Accessible.Button
         onClicked: cell.activated()
         Keys.onPressed: event => {

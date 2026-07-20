@@ -1,5 +1,5 @@
 [Unit]
-Description=kde-tags - receptor de avisos ntfy
+Description=kde-tags - ntfy notification receiver
 
 [Service]
 ExecStart=@NTFY_BIN@ subscribe --config %h/.config/kde-tags/client.yml --from-config

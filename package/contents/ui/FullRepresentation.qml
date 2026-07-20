@@ -1,6 +1,6 @@
 /*
-    Popup de kde-tags: buscador, cuadrícula de compañeros estilo escritorios
-    múltiples con scroll, campo de mensaje y botones de acción.
+    kde-tags popup: search field, virtual-desktops-style coworker grid with
+    scrolling, message field and action buttons.
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
@@ -18,7 +18,7 @@ PlasmaExtras.Representation {
     readonly property int cellWidth: PlasmaCore.Units.gridUnit * 6
     readonly property int cellHeight: Math.round(cellWidth / 1.6)
 
-    // Filtro insensible a mayúsculas y acentos.
+    // Case- and accent-insensitive filter.
     function norm(s) {
         return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     }
@@ -33,12 +33,12 @@ PlasmaExtras.Representation {
         });
     }
 
-    // La geometría se calcula sobre el roster completo (no el filtrado) para
-    // que el popup no cambie de tamaño mientras se escribe en el buscador.
+    // Geometry is computed over the full roster (not the filtered one) so the
+    // popup does not resize while typing in the search field.
     readonly property int gridColumns: Math.max(1, Math.min(4, Math.ceil(Math.sqrt(root.count))))
     readonly property int gridRowsAll: Math.max(1, Math.ceil(root.count / gridColumns))
 
-    // Selección por topic: sobrevive al filtrado y a reordenados del roster.
+    // Selection by topic: survives filtering and roster reordering.
     property string selectedTopic: ""
     readonly property var selectedCoworker: {
         if (selectedTopic === "") {
@@ -49,16 +49,16 @@ PlasmaExtras.Representation {
                 return root.roster[i];
             }
         }
-        return null; // el seleccionado ya no está en el roster
+        return null; // the selected coworker is no longer in the roster
     }
 
     function selectedCell() {
         for (let i = 0; i < shownRoster.length; ++i) {
             if (String(shownRoster[i].topic || "").trim() === selectedTopic) {
-                return repeater.itemAt(i); // puede ser null: siempre con guard
+                return repeater.itemAt(i); // may be null: always guard
             }
         }
-        return null; // seleccionado pero filtrado: sin feedback visible
+        return null; // selected but filtered out: no visible feedback
     }
 
     collapseMarginsHint: true
@@ -75,8 +75,8 @@ PlasmaExtras.Representation {
         + (header ? header.implicitHeight : 0) + (footer ? footer.implicitHeight : 0)))
     Layout.maximumHeight: PlasmaCore.Units.gridUnit * 26
 
-    // Al abrir el popup: limpiar búsqueda y selección (observador de propiedad:
-    // Connections sobre Plasmoid no resuelve expandedChanged en Plasma 5).
+    // On popup open: clear search and selection (property observer, because
+    // Connections on Plasmoid cannot resolve expandedChanged in Plasma 5).
     readonly property bool popupExpanded: Plasmoid.expanded
     onPopupExpandedChanged: {
         if (popupExpanded) {
@@ -93,11 +93,11 @@ PlasmaExtras.Representation {
                 id: searchField
 
                 Layout.fillWidth: true
-                placeholderText: "Buscar compañero…"
-                // Se re-evalúa en cada apertura → el buscador recibe el foco
+                placeholderText: "Search coworker…"
+                // Re-evaluated on every open → the search field grabs focus
                 focus: Plasmoid.expanded
                 onAccepted: {
-                    // Enter con un único resultado: seleccionarlo y pasar al mensaje
+                    // Enter with a single match: select it and jump to the message
                     if (fullRep.shownRoster.length === 1) {
                         fullRep.selectedTopic = String(fullRep.shownRoster[0].topic || "").trim();
                         messageField.forceActiveFocus();
@@ -108,7 +108,7 @@ PlasmaExtras.Representation {
             PlasmaComponents3.ToolButton {
                 icon.name: "configure"
                 onClicked: Plasmoid.action("configure").trigger()
-                PlasmaComponents3.ToolTip.text: "Configurar…"
+                PlasmaComponents3.ToolTip.text: "Configure…"
                 PlasmaComponents3.ToolTip.visible: hovered
             }
         }
@@ -122,7 +122,7 @@ PlasmaExtras.Representation {
 
             anchors.fill: parent
             visible: fullRep.shownRoster.length > 0
-            contentWidth: availableWidth // solo scroll vertical
+            contentWidth: availableWidth // vertical scrolling only
 
             Item {
                 width: scroll.availableWidth
@@ -162,10 +162,10 @@ PlasmaExtras.Representation {
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.count === 0
             iconName: "dialog-messages"
-            text: "No hay compañeros configurados ni detectados en la red local"
+            text: "No coworkers configured or detected on the local network"
             helpfulAction: QQC2.Action {
                 icon.name: "configure"
-                text: "Configurar…"
+                text: "Configure…"
                 onTriggered: Plasmoid.action("configure").trigger()
             }
         }
@@ -175,7 +175,7 @@ PlasmaExtras.Representation {
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.count > 0 && fullRep.shownRoster.length === 0
             iconName: "edit-none"
-            text: "Sin resultados"
+            text: "No matches"
         }
     }
 
@@ -187,7 +187,7 @@ PlasmaExtras.Representation {
                 id: messageField
 
                 Layout.fillWidth: true
-                placeholderText: "Mensaje (opcional, para \"Enviar mensaje\")"
+                placeholderText: "Message (optional, for \"Send message\")"
                 onAccepted: {
                     if (sendButton.enabled) {
                         sendButton.clicked();
@@ -204,14 +204,14 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "user-available"
-                    text: "Solicitar presencia"
+                    text: "Request presence"
                     enabled: fullRep.selectedCoworker !== null
                     onClicked: {
                         const cell = fullRep.selectedCell();
                         if (cell) {
                             root.requestPresence(fullRep.selectedCoworker, cell);
                         } else if (fullRep.selectedCoworker) {
-                            // seleccionado pero filtrado de la vista: enviar sin feedback de celda
+                            // selected but filtered out of view: send without cell feedback
                             root.requestPresence(fullRep.selectedCoworker, dummyCell);
                         }
                     }
@@ -222,7 +222,7 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "document-send"
-                    text: "Enviar mensaje"
+                    text: "Send message"
                     enabled: fullRep.selectedCoworker !== null
                              && messageField.text.trim().length > 0
                     onClicked: {
@@ -242,8 +242,8 @@ PlasmaExtras.Representation {
         }
     }
 
-    // Receptor de callbacks cuando la celda seleccionada está filtrada de la
-    // vista: implementa la misma interfaz mínima que PersonCell.
+    // Callback receiver for when the selected cell is filtered out of view:
+    // implements the same minimal interface as PersonCell.
     QtObject {
         id: dummyCell
 

@@ -1,145 +1,149 @@
-# kde-tags — widget de KDE Plasma
+# kde-tags — KDE Plasma widget
 
-Plasmoide de panel para avisar a compañeros de trabajo: un icono de chat en el
-panel que al hacer clic abre un popup con la cuadrícula de compañeros (estilo
-escritorios múltiples de Plasma, con celdas "vidrio" semitransparentes).
-Seleccionas a alguien y puedes **solicitar su presencia** ("X solicita tu
-presencia en su escritorio") o **enviarle un mensaje escrito**. El envío es un
-POST HTTP al topic ntfy de esa persona; en su máquina un servicio (`receiver/`)
-muestra la notificación de escritorio con sonido.
+Panel plasmoid for reaching your coworkers: a chat icon in the panel that opens
+a popup with a coworker grid (styled like Plasma's virtual desktops pager, with
+translucent "glass" cells). Select someone and either **request their
+presence** ("X is requesting your presence at their desk") or **send them a
+written message**. Sending is an HTTP POST to that person's ntfy topic; on
+their machine a small service (`receiver/`) shows the desktop notification
+with sound. Coworkers on the same local network are **discovered
+automatically** via mDNS.
 
-Requiere Plasma 5 (desarrollado y probado en 5.27 / Qt 5.15).
+Requires Plasma 5 (developed and tested on 5.27 / Qt 5.15).
 
-Repositorio: **https://github.com/Wolflags/kde-tags**
+Repository: **https://github.com/Wolflags/kde-tags**
 
-## Estructura
+## Layout
 
-- `package/` — el plasmoide (`com.josej.kdetags`): QML + config.
-- `receiver/` — lo que instala cada compañero para recibir avisos (ntfy + notify-send + servicio systemd de usuario). Ver `receiver/README.md`.
+- `package/` — the plasmoid (`com.josej.kdetags`): QML + config.
+- `receiver/` — what each coworker installs to receive notifications (ntfy + notify-send + systemd user service). See `receiver/README.md`.
 
-## 1. Descargar
+## 1. Download
 
-Todo parte de clonar este repositorio (vale tanto para instalar el widget como el receptor):
+Everything starts by cloning this repository (both for the widget and the receiver):
 
 ```sh
 git clone https://github.com/Wolflags/kde-tags.git
 cd kde-tags
 ```
 
-## 2. Instalar el widget (quien envía avisos)
+## 2. Install the widget (whoever sends notifications)
 
-Desde la carpeta clonada:
+From the cloned folder:
 
 ```sh
-# primera vez
+# first time
 kpackagetool5 -t Plasma/Applet -i package
 
-# para actualizar (tras un git pull o editar archivos)
+# to update (after a git pull or editing files)
 kpackagetool5 -t Plasma/Applet -u package
 
-# Plasma cachea el QML: reiniciar plasmashell tras instalar/actualizar
+# Plasma caches the QML: restart plasmashell after installing/updating
 systemctl --user restart plasma-plasmashell.service
 ```
 
-Luego: clic derecho en el panel → *Añadir elementos gráficos* → **kde-tags**.
-Para tenerlo junto a los iconos de red/volumen: en el modo de edición del
-panel, arrastra el widget hasta dejarlo pegado a la bandeja del sistema.
+Then: right-click the panel → *Add Widgets* → **kde-tags**.
+To keep it next to the network/volume icons: in panel edit mode, drag the
+widget right up against the system tray.
 
-## 3. Instalar el receptor (quien recibe avisos)
+## 3. Install the receiver (whoever receives notifications)
 
-Desde la carpeta clonada, en la máquina de cada compañero:
+From the cloned folder, on each coworker's machine:
 
 ```sh
 cd receiver
 ./install-receiver.sh
 ```
 
-El instalador descarga ntfy si hace falta, pregunta el servidor (Enter =
-`https://ntfy.sh`) y el topic personal, deja corriendo el servicio
-`kde-tags-receiver.service` y envía un aviso de prueba. Al final imprime el
-topic: **ese es el valor que se comparte** con quien deba poder avisarte
-(va en la configuración del widget junto a tu nombre).
+The installer downloads ntfy if needed, asks for the server (Enter =
+`https://ntfy.sh`) and your personal topic, leaves the
+`kde-tags-receiver.service` running and sends a test notification. At the end
+it prints the topic: **that is the value to share** with anyone who should be
+able to reach you (it goes in the widget's settings next to your name).
 
-### Topic personalizado
+### Custom topic
 
-Si dejas el topic vacío, el instalador genera uno aleatorio tipo
-`kde-tags-ana-x7k2m9q4pz`. Para elegir uno propio:
-
-```sh
-# con flag (también sirve --server para un servidor ntfy propio)
-./install-receiver.sh --topic mi-topic-secreto-x7k2
-
-# o con variables de entorno (modo no interactivo, útil para desplegar)
-KDE_TAGS_TOPIC=mi-topic-secreto-x7k2 KDE_TAGS_SERVER=https://ntfy.sh ./install-receiver.sh
-```
-
-El topic funciona como una contraseña: elige algo difícil de adivinar y
-compártelo solo con el equipo. Detalle completo en `receiver/README.md`.
-
-## Descubrimiento automático en la red local (mDNS)
-
-Si todos están en la misma LAN, no hace falta intercambiar topics a mano: el
-instalador del receptor pregunta tu **nombre visible** y anuncia un servicio
-mDNS `_kdetags._tcp` (con tu nombre y topic); los widgets de los demás lo
-detectan al abrir el popup y te muestran automáticamente con tus iniciales.
-
-Requisito en **ambos** lados (anunciar y descubrir):
+If you leave the topic empty, the installer generates a random one like
+`kde-tags-ana-x7k2m9q4pz`. To pick your own:
 
 ```sh
-sudo apt install avahi-utils    # avahi-daemon suele venir ya activo
+# with a flag (--server also works, for a self-hosted ntfy server)
+./install-receiver.sh --topic my-secret-topic-x7k2
+
+# or with environment variables (non-interactive mode, useful for rollouts)
+KDE_TAGS_TOPIC=my-secret-topic-x7k2 KDE_TAGS_SERVER=https://ntfy.sh ./install-receiver.sh
 ```
 
-Notas:
-- Se puede desactivar por máquina (`./install-receiver.sh --no-announce`) o en
-  el widget (Configuración → "Descubrir compañeros automáticamente").
-- Las entradas manuales tienen prioridad: añade a alguien con su mismo topic
-  para renombrarlo; y sirven para gente fuera de la LAN (el descubrimiento
-  mDNS no cruza routers/VPN).
-- Si un equipo se apaga de golpe, su anuncio puede tardar un rato en expirar
-  de la caché mDNS (cosmético).
+The topic works like a password: pick something hard to guess and share it
+only with your team. Full details in `receiver/README.md`.
 
-## Uso
+## Automatic discovery on the local network (mDNS)
 
-1. Clic en el icono de chat del panel → se abre el popup.
-2. Si son muchos, escribe en el **buscador** (tiene el foco al abrir; filtra por
-   nombre, sin distinguir mayúsculas ni acentos). Enter con un único resultado
-   lo selecciona y salta al campo de mensaje. Con muchas personas la cuadrícula
-   se limita a 4 columnas y hace scroll vertical.
-3. Clic en un compañero para seleccionarlo (se resalta; otro clic lo deselecciona).
-4. Botón **Solicitar presencia** (aviso prioritario fijo) o escribe un texto y
-   **Enviar mensaje** (Enter en el campo también envía).
-5. La celda muestra el resultado: giratorio → ✓ (aceptado por el servidor) o
-   rojo + error (sin red, servidor mal, timeout de 10 s). El borrador solo se
-   borra si el envío tuvo éxito.
+If everyone is on the same LAN, there is no need to exchange topics by hand:
+the receiver installer asks for your **display name** and announces an mDNS
+service `_kdetags._tcp` (with your name and topic); everyone else's widget
+detects it when the popup opens and shows you automatically with your
+initials.
 
-## Configuración
+Requirement on **both** sides (announcing and discovering):
 
-Botón de engranaje en el popup (o clic derecho → *Configurar kde-tags*):
+```sh
+sudo apt install avahi-utils    # avahi-daemon is usually already running
+```
 
-- **Servidor ntfy** — `https://ntfy.sh` o tu servidor propio.
-- **Tu nombre** — aparece en el aviso del compañero.
-- **Compañeros** — nombre + topic ntfy de cada uno (el topic se lo da su
-  `install-receiver.sh`). Los topics `teamcall-*` de la v1 siguen funcionando:
-  el prefijo es cosmético.
+Notes:
+- It can be disabled per machine (`./install-receiver.sh --no-announce`) or in
+  the widget (Settings → "Discover coworkers automatically").
+- Manual entries take precedence: add someone with their same topic to rename
+  them; they also cover people outside the LAN (mDNS discovery does not cross
+  routers/VPNs).
+- If a machine shuts down abruptly, its announcement may take a while to
+  expire from the mDNS cache (cosmetic).
 
-## Depuración
+## Usage
+
+1. Click the chat icon in the panel → the popup opens.
+2. With many people, type in the **search field** (it has focus on open; it
+   filters by name, case- and accent-insensitive). Enter with a single match
+   selects it and jumps to the message field. With large teams the grid caps
+   at 4 columns and scrolls vertically.
+3. Click a coworker to select them (highlighted; click again to deselect).
+4. **Request presence** button (fixed high-priority notification) or type a
+   text and **Send message** (Enter in the field also sends).
+5. The cell shows the result: spinner → ✓ (accepted by the server) or red +
+   error (no network, bad server, 10 s timeout). The draft is only cleared if
+   the send succeeded.
+
+## Settings
+
+Gear button in the popup (or right-click → *Configure kde-tags*):
+
+- **ntfy server** — `https://ntfy.sh` or your own server.
+- **Your name** — shown in the coworker's notification.
+- **Local network** — toggle for automatic mDNS discovery.
+- **Coworkers** — name + ntfy topic for each one (the topic comes from their
+  `install-receiver.sh`). Topics from older versions (`teamcall-*`) keep
+  working: the prefix is cosmetic.
+
+## Debugging
 
 ```sh
 journalctl --user -u plasma-plasmashell.service -b -f | grep -iE 'kde-tags|qml'
 ```
 
-Si cambias defaults en `contents/config/main.xml` después de haber añadido el
-widget, quita y vuelve a añadir la instancia (los valores viejos quedan en
+If you change defaults in `contents/config/main.xml` after the widget was
+added, remove and re-add the instance (old values are kept in
 `~/.config/plasma-org.kde.plasma.desktop-appletsrc`).
 
-## Privacidad
+## Privacy
 
-En ntfy.sh el topic es efectivamente una contraseña: usa sufijos aleatorios
-(`kde-tags-jose-8f3k2q9x`) y compártelos solo dentro del equipo. Para más
-privacidad, servidor ntfy propio con tokens (extensión futura: cabecera
-`Authorization: Bearer` en el widget).
+On ntfy.sh the topic is effectively a password: use random suffixes
+(`kde-tags-jose-8f3k2q9x`) and share them only within your team. For more
+privacy, self-host an ntfy server with tokens (future extension: an
+`Authorization: Bearer` header in the widget).
 
-**Con el anuncio mDNS activado, tu topic se difunde a toda la red local**:
-cualquiera conectado a esa LAN puede verlo (y por tanto enviarte avisos o
-suscribirse a él). En una red de oficina de confianza suele ser aceptable;
-si no, instala con `--no-announce` e intercambia topics a mano.
+**With the mDNS announcement enabled, your topic is broadcast to the whole
+local network**: anyone connected to that LAN can see it (and therefore send
+you notifications or subscribe to it). On a trusted office network that is
+usually acceptable; otherwise install with `--no-announce` and exchange topics
+by hand.

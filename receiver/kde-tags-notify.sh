@@ -1,15 +1,15 @@
 #!/bin/sh
-# Lo invoca `ntfy subscribe` en cada aviso recibido.
-# ntfy exporta NTFY_TITLE, NTFY_MESSAGE, NTFY_PRIORITY, NTFY_TAGS, etc.
+# Invoked by `ntfy subscribe` for every received notification.
+# ntfy exports NTFY_TITLE, NTFY_MESSAGE, NTFY_PRIORITY, NTFY_TAGS, etc.
 
-# Prioridad ntfy >= 4 (solicitudes de presencia) => notificación persistente.
+# ntfy priority >= 4 (presence requests) => persistent notification.
 if [ "${NTFY_PRIORITY:-3}" -ge 4 ] 2>/dev/null; then
     URGENCY=critical
 else
     URGENCY=normal
 fi
 
-# El CLI de ntfy entrega los tags sin convertir a emoji; se hace aquí.
+# The ntfy CLI delivers tags without converting them to emoji; do it here.
 case "${NTFY_TAGS:-}" in
     *wave*)           PREFIX="👋 " ;;
     *speech_balloon*) PREFIX="💬 " ;;
