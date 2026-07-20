@@ -22,7 +22,7 @@ PlasmaExtras.Representation {
 
     property int selectedIndex: -1
     readonly property var selectedCoworker: selectedIndex >= 0 && selectedIndex < root.count
-        ? root.coworkers[selectedIndex]
+        ? root.roster[selectedIndex]
         : null
 
     function selectedCell() {
@@ -53,7 +53,7 @@ PlasmaExtras.Representation {
 
     Connections {
         target: root
-        function onCoworkersChanged() {
+        function onRosterChanged() {
             fullRep.selectedIndex = -1;
         }
     }
@@ -89,7 +89,7 @@ PlasmaExtras.Representation {
             Repeater {
                 id: repeater
 
-                model: root.coworkers
+                model: root.roster
 
                 PersonCell {
                     width: fullRep.cellWidth
@@ -107,7 +107,7 @@ PlasmaExtras.Representation {
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.count === 0
             iconName: "dialog-messages"
-            text: "No hay compañeros configurados"
+            text: "No hay compañeros configurados ni detectados en la red local"
             helpfulAction: QQC2.Action {
                 icon.name: "configure"
                 text: "Configurar…"

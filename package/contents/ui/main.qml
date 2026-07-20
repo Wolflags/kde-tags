@@ -18,7 +18,27 @@ Item {
             return [];
         }
     }
-    readonly property int count: coworkers.length
+
+    // Compañeros anunciados por mDNS en la red local (rellenado por discoverySource).
+    property var discovered: []
+
+    // Lista final: manuales primero; ante topic duplicado gana la entrada manual
+    // (permite renombrar a alguien descubierto).
+    readonly property var roster: {
+        const seen = {};
+        const out = [];
+        for (let i = 0; i < coworkers.length; ++i) {
+            out.push(coworkers[i]);
+            seen[String(coworkers[i].topic || "").trim()] = true;
+        }
+        for (let j = 0; j < discovered.length; ++j) {
+            if (!seen[discovered[j].topic]) {
+                out.push(discovered[j]);
+            }
+        }
+        return out;
+    }
+    readonly property int count: roster.length
 
     Plasmoid.switchWidth: PlasmaCore.Units.gridUnit * 12
     Plasmoid.switchHeight: PlasmaCore.Units.gridUnit * 10
@@ -86,6 +106,106 @@ Item {
         sendNtfy(coworker.topic, "Mensaje nuevo", "speech_balloon", "",
                  senderName() + ": " + text, cell, onDone);
     }
+
+    // --- Descubrimiento mDNS (Avahi) en la red local ---
+
+    // Un solo viaje: primera línea = topic propio (para excluirse), resto =
+    // volcado one-shot de avahi-browse. exit 127 = avahi-browse no instalado.
+    readonly property string discoverCmd:
+        "echo \"SELF:$(awk '/- topic:/{print $3; exit}' \"$HOME/.config/kde-tags/client.yml\" 2>/dev/null)\"; "
+        + "avahi-browse -rtp _kdetags._tcp 2>/dev/null"
+
+    PlasmaCore.DataSource {
+        id: discoverySource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName); // imprescindible para poder relanzar el mismo comando
+            if (data["exit code"] === 127) {
+                root.discovered = [];
+                return;
+            }
+            root.applyDiscovery(String(data["stdout"] || ""));
+        }
+    }
+
+    function discoverNow() {
+        if (Plasmoid.configuration.lanDiscovery !== true) {
+            return;
+        }
+        if (discoverySource.connectedSources.length > 0) {
+            return; // ya hay un escaneo en marcha
+        }
+        discoverySource.connectSource(discoverCmd);
+    }
+
+    function applyDiscovery(out) {
+        let self = "";
+        const found = {};
+        const lines = out.split("\n");
+        for (let i = 0; i < lines.length; ++i) {
+            const line = lines[i];
+            if (line.indexOf("SELF:") === 0) {
+                self = line.slice(5).trim();
+                continue;
+            }
+            if (line.charAt(0) !== "=") {
+                continue;
+            }
+            const parts = line.split(";");
+            if (parts.length < 10) {
+                continue;
+            }
+            // El TXT (campo 9 en adelante) puede contener ';': se re-une y se
+            // extraen los pares "clave=valor" entre comillas con regex.
+            const txt = parts.slice(9).join(";");
+            const kv = {};
+            const re = /"([^"]*)"/g;
+            let m;
+            while ((m = re.exec(txt)) !== null) {
+                const eq = m[1].indexOf("=");
+                if (eq > 0) {
+                    kv[m[1].slice(0, eq)] = m[1].slice(eq + 1);
+                }
+            }
+            const topic = String(kv.topic || "").trim();
+            if (topic === "" || topic === self || found[topic]) {
+                continue; // sin topic, uno mismo, o duplicado IPv4/IPv6/interfaz
+            }
+            found[topic] = {
+                name: String(kv.name || "").trim() || topic,
+                topic: topic,
+                discovered: true
+            };
+        }
+        const list = Object.keys(found).map(function (t) { return found[t]; })
+            .sort(function (a, b) { return a.name.localeCompare(b.name); });
+        // Sin cambios reales => no tocar la lista (evita resetear la selección).
+        if (JSON.stringify(list) !== JSON.stringify(discovered)) {
+            discovered = list;
+        }
+    }
+
+    // Observadores de propiedad (Connections sobre Plasmoid/configuration no
+    // resuelve estas señales en Plasma 5).
+    readonly property bool popupExpanded: Plasmoid.expanded
+    onPopupExpandedChanged: {
+        if (popupExpanded) {
+            discoverNow();
+        }
+    }
+
+    readonly property bool lanDiscoveryOn: Plasmoid.configuration.lanDiscovery === true
+    onLanDiscoveryOnChanged: {
+        if (lanDiscoveryOn) {
+            discoverNow();
+        } else {
+            discovered = [];
+        }
+    }
+
+    Component.onCompleted: discoverNow()
 
     Plasmoid.compactRepresentation: CompactRepresentation { }
     Plasmoid.fullRepresentation: FullRepresentation { }

@@ -8,6 +8,7 @@ ColumnLayout {
 
     property alias cfg_serverUrl: serverField.text
     property alias cfg_senderName: senderField.text
+    property alias cfg_lanDiscovery: lanDiscoveryBox.checked
     // Se guarda como string JSON: [{"name": ..., "topic": ...}, ...]
     property string cfg_coworkers
 
@@ -57,6 +58,13 @@ ColumnLayout {
             Kirigami.FormData.label: "Tu nombre:"
             placeholderText: "Cómo te verán tus compañeros"
         }
+
+        QQC2.CheckBox {
+            id: lanDiscoveryBox
+
+            Kirigami.FormData.label: "Red local:"
+            text: "Descubrir compañeros automáticamente (mDNS)"
+        }
     }
 
     Kirigami.Heading {
@@ -72,7 +80,10 @@ ColumnLayout {
               + "(carpeta receiver/ del proyecto: ./install-receiver.sh) en su PC. Al terminar, "
               + "el script imprime su topic personal (p. ej. kde-tags-ana-x7k2m9q4pz): pídeselo y "
               + "pégalo aquí junto a su nombre. También puede elegir uno propio ejecutando "
-              + "./install-receiver.sh --topic el-topic-que-quiera."
+              + "./install-receiver.sh --topic el-topic-que-quiera. Con el descubrimiento en red "
+              + "local activado, quienes instalen el receptor en tu misma red aparecen solos en el "
+              + "widget (esta lista manual sirve para gente fuera de la LAN, o para renombrar a "
+              + "alguien descubierto añadiéndolo con el mismo topic)."
     }
 
     ListView {

@@ -74,6 +74,28 @@ KDE_TAGS_TOPIC=mi-topic-secreto-x7k2 KDE_TAGS_SERVER=https://ntfy.sh ./install-r
 El topic funciona como una contraseña: elige algo difícil de adivinar y
 compártelo solo con el equipo. Detalle completo en `receiver/README.md`.
 
+## Descubrimiento automático en la red local (mDNS)
+
+Si todos están en la misma LAN, no hace falta intercambiar topics a mano: el
+instalador del receptor pregunta tu **nombre visible** y anuncia un servicio
+mDNS `_kdetags._tcp` (con tu nombre y topic); los widgets de los demás lo
+detectan al abrir el popup y te muestran automáticamente con tus iniciales.
+
+Requisito en **ambos** lados (anunciar y descubrir):
+
+```sh
+sudo apt install avahi-utils    # avahi-daemon suele venir ya activo
+```
+
+Notas:
+- Se puede desactivar por máquina (`./install-receiver.sh --no-announce`) o en
+  el widget (Configuración → "Descubrir compañeros automáticamente").
+- Las entradas manuales tienen prioridad: añade a alguien con su mismo topic
+  para renombrarlo; y sirven para gente fuera de la LAN (el descubrimiento
+  mDNS no cruza routers/VPN).
+- Si un equipo se apaga de golpe, su anuncio puede tardar un rato en expirar
+  de la caché mDNS (cosmético).
+
 ## Uso
 
 1. Clic en el icono de chat del panel → se abre el popup.
@@ -110,3 +132,8 @@ En ntfy.sh el topic es efectivamente una contraseña: usa sufijos aleatorios
 (`kde-tags-jose-8f3k2q9x`) y compártelos solo dentro del equipo. Para más
 privacidad, servidor ntfy propio con tokens (extensión futura: cabecera
 `Authorization: Bearer` en el widget).
+
+**Con el anuncio mDNS activado, tu topic se difunde a toda la red local**:
+cualquiera conectado a esa LAN puede verlo (y por tanto enviarte avisos o
+suscribirse a él). En una red de oficina de confianza suele ser aceptable;
+si no, instala con `--no-announce` e intercambia topics a mano.

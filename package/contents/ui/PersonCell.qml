@@ -20,6 +20,7 @@ PlasmaCore.ToolTipArea {
     property string callState: "idle"
     property var activeXhr: null
 
+    readonly property bool discovered: !!coworker && coworker.discovered === true
     readonly property string coworkerName: String(coworker.name || "")
     readonly property string initials: {
         const name = coworkerName.trim();
@@ -37,7 +38,8 @@ PlasmaCore.ToolTipArea {
     mainText: coworkerName
     subText: callState === "error"
         ? "No se pudo enviar"
-        : (selected ? "Seleccionado" : "Clic para seleccionar")
+        : (discovered ? "Detectado en la red local · " : "")
+          + (selected ? "Seleccionado" : "Clic para seleccionar")
 
     function beginCall(xhr) {
         activeXhr = xhr;

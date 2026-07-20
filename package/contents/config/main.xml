@@ -17,5 +17,9 @@
             <label>Lista de compañeros como array JSON de objetos {name, topic}.</label>
             <default>[]</default>
         </entry>
+        <entry name="lanDiscovery" type="Bool">
+            <label>Descubrir compañeros automáticamente en la red local (mDNS).</label>
+            <default>true</default>
+        </entry>
     </group>
 </kcfg>
