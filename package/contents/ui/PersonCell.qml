@@ -37,9 +37,9 @@ PlasmaCore.ToolTipArea {
 
     mainText: coworkerName
     subText: callState === "error"
-        ? "Could not send"
-        : (discovered ? "Detected on local network · " : "")
-          + (selected ? "Selected" : "Click to select")
+        ? root.tr("cell.couldNotSend")
+        : (discovered ? root.tr("cell.detected") : "")
+          + (selected ? root.tr("cell.selected") : root.tr("cell.clickToSelect"))
 
     function beginCall(xhr) {
         activeXhr = xhr;
@@ -165,7 +165,7 @@ PlasmaCore.ToolTipArea {
         hoverEnabled: true
         activeFocusOnTab: true
         cursorShape: Qt.PointingHandCursor
-        Accessible.name: "Select " + cell.coworkerName
+        Accessible.name: root.tr("cell.select").replace("%1", cell.coworkerName)
         Accessible.role: Accessible.Button
         onClicked: cell.activated()
         Keys.onPressed: event => {

@@ -18,6 +18,7 @@ MouseArea {
     hoverEnabled: true
     activeFocusOnTab: true
     Accessible.name: "kde-tags"
+    Accessible.description: root.tr("tooltip.configure")
     Accessible.role: Accessible.Button
 
     onPressed: wasExpanded = Plasmoid.expanded

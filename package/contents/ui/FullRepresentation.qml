@@ -93,7 +93,7 @@ PlasmaExtras.Representation {
                 id: searchField
 
                 Layout.fillWidth: true
-                placeholderText: "Search coworker…"
+                placeholderText: root.tr("popup.search")
                 // Re-evaluated on every open → the search field grabs focus
                 focus: Plasmoid.expanded
                 onAccepted: {
@@ -108,7 +108,7 @@ PlasmaExtras.Representation {
             PlasmaComponents3.ToolButton {
                 icon.name: "configure"
                 onClicked: Plasmoid.action("configure").trigger()
-                PlasmaComponents3.ToolTip.text: "Configure…"
+                PlasmaComponents3.ToolTip.text: root.tr("popup.configure")
                 PlasmaComponents3.ToolTip.visible: hovered
             }
         }
@@ -162,10 +162,10 @@ PlasmaExtras.Representation {
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.count === 0
             iconName: "dialog-messages"
-            text: "No coworkers configured or detected on the local network"
+            text: root.tr("popup.empty")
             helpfulAction: QQC2.Action {
                 icon.name: "configure"
-                text: "Configure…"
+                text: root.tr("popup.configure")
                 onTriggered: Plasmoid.action("configure").trigger()
             }
         }
@@ -175,7 +175,7 @@ PlasmaExtras.Representation {
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.count > 0 && fullRep.shownRoster.length === 0
             iconName: "edit-none"
-            text: "No matches"
+            text: root.tr("popup.noMatches")
         }
     }
 
@@ -187,7 +187,7 @@ PlasmaExtras.Representation {
                 id: messageField
 
                 Layout.fillWidth: true
-                placeholderText: "Message (optional, for \"Send message\")"
+                placeholderText: root.tr("popup.message")
                 onAccepted: {
                     if (sendButton.enabled) {
                         sendButton.clicked();
@@ -204,7 +204,7 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "user-available"
-                    text: "Request presence"
+                    text: root.tr("popup.requestPresence")
                     enabled: fullRep.selectedCoworker !== null
                     onClicked: {
                         const cell = fullRep.selectedCell();
@@ -222,7 +222,7 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "document-send"
-                    text: "Send message"
+                    text: root.tr("popup.sendMessage")
                     enabled: fullRep.selectedCoworker !== null
                              && messageField.text.trim().length > 0
                     onClicked: {

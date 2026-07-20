@@ -21,5 +21,9 @@
             <label>Discover coworkers automatically on the local network (mDNS).</label>
             <default>true</default>
         </entry>
+        <entry name="language" type="String">
+            <label>UI language: "en" (English) or "es" (Spanish).</label>
+            <default>en</default>
+        </entry>
     </group>
 </kcfg>

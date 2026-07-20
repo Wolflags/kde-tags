@@ -118,6 +118,8 @@ Notes:
 
 Gear button in the popup (or right-click → *Configure kde-tags*):
 
+- **Language** — English or Español; translates the whole interface (and the
+  notifications you send) for this user. Default: English.
 - **ntfy server** — `https://ntfy.sh` or your own server.
 - **Your name** — shown in the coworker's notification.
 - **Local network** — toggle for automatic mDNS discovery.

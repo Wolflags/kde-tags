@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.5 as QQC2
 import QtQuick.Layouts 1.1
 import org.kde.kirigami 2.5 as Kirigami
+import "i18n.js" as I18n
 
 ColumnLayout {
     id: page
@@ -9,8 +10,17 @@ ColumnLayout {
     property alias cfg_serverUrl: serverField.text
     property alias cfg_senderName: senderField.text
     property alias cfg_lanDiscovery: lanDiscoveryBox.checked
+    property string cfg_language
     // Stored as a JSON string: [{"name": ..., "topic": ...}, ...]
     property string cfg_coworkers
+
+    // Reflects the combo's CURRENT choice so the page retranslates live,
+    // before Apply. Index-based (avoids valueRole/currentValue, which need
+    // QtQuick.Controls 2.14+): 0 = English, 1 = Español.
+    readonly property string uiLang: languageCombo.currentIndex === 1 ? "es" : "en"
+    function tr(key) {
+        return I18n.t(uiLang, key);
+    }
 
     spacing: Kirigami.Units.largeSpacing
 
@@ -19,6 +29,8 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        // Preselect the stored language in the combo.
+        languageCombo.currentIndex = (cfg_language === "es") ? 1 : 0;
         try {
             const parsed = JSON.parse(cfg_coworkers);
             if (Array.isArray(parsed)) {
@@ -45,45 +57,46 @@ ColumnLayout {
     Kirigami.FormLayout {
         Layout.fillWidth: true
 
+        QQC2.ComboBox {
+            id: languageCombo
+
+            Kirigami.FormData.label: page.tr("cfg.language")
+            model: ["English", "Español"]
+            onActivated: page.cfg_language = (currentIndex === 1 ? "es" : "en")
+        }
+
         QQC2.TextField {
             id: serverField
 
-            Kirigami.FormData.label: "ntfy server:"
+            Kirigami.FormData.label: page.tr("cfg.server")
             placeholderText: "https://ntfy.sh"
         }
 
         QQC2.TextField {
             id: senderField
 
-            Kirigami.FormData.label: "Your name:"
-            placeholderText: "How your coworkers will see you"
+            Kirigami.FormData.label: page.tr("cfg.yourName")
+            placeholderText: page.tr("cfg.yourNamePlaceholder")
         }
 
         QQC2.CheckBox {
             id: lanDiscoveryBox
 
-            Kirigami.FormData.label: "Local network:"
-            text: "Discover coworkers automatically (mDNS)"
+            Kirigami.FormData.label: page.tr("cfg.localNetwork")
+            text: page.tr("cfg.discover")
         }
     }
 
     Kirigami.Heading {
         level: 2
-        text: "Coworkers"
+        text: page.tr("cfg.coworkers")
     }
 
     QQC2.Label {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         opacity: 0.7
-        text: "Where does the topic come from? Each coworker runs the receiver installer "
-              + "(the project's receiver/ folder: ./install-receiver.sh) on their PC. When it "
-              + "finishes, the script prints their personal topic (e.g. kde-tags-ana-x7k2m9q4pz): "
-              + "ask them for it and paste it here next to their name. They can also pick their "
-              + "own by running ./install-receiver.sh --topic whatever-they-want. With local "
-              + "network discovery enabled, anyone who installs the receiver on your network "
-              + "shows up in the widget automatically (this manual list is for people outside "
-              + "the LAN, or to rename a discovered coworker by adding them with the same topic)."
+        text: page.tr("cfg.topicHelp")
     }
 
     ListView {
@@ -102,7 +115,7 @@ ColumnLayout {
             QQC2.TextField {
                 Layout.fillWidth: true
                 text: model.name
-                placeholderText: "Name"
+                placeholderText: page.tr("cfg.name")
                 onEditingFinished: {
                     coworkerModel.setProperty(index, "name", text);
                     page.save();
@@ -112,7 +125,7 @@ ColumnLayout {
             QQC2.TextField {
                 Layout.fillWidth: true
                 text: model.topic
-                placeholderText: "ntfy topic"
+                placeholderText: page.tr("cfg.topic")
                 onEditingFinished: {
                     coworkerModel.setProperty(index, "topic", text);
                     page.save();
@@ -125,7 +138,7 @@ ColumnLayout {
                     coworkerModel.remove(index);
                     page.save();
                 }
-                QQC2.ToolTip.text: "Remove"
+                QQC2.ToolTip.text: page.tr("cfg.remove")
                 QQC2.ToolTip.visible: hovered
             }
         }
@@ -139,19 +152,19 @@ ColumnLayout {
             id: newName
 
             Layout.fillWidth: true
-            placeholderText: "Name"
+            placeholderText: page.tr("cfg.name")
         }
 
         QQC2.TextField {
             id: newTopic
 
             Layout.fillWidth: true
-            placeholderText: "ntfy topic (e.g. kde-tags-ana-x7k2m9q4pz)"
+            placeholderText: page.tr("cfg.topicPlaceholder")
         }
 
         QQC2.Button {
             icon.name: "list-add"
-            text: "Add"
+            text: page.tr("cfg.add")
             enabled: newName.text.trim().length > 0 && newTopic.text.trim().length > 0
             onClicked: {
                 coworkerModel.append({
@@ -170,7 +183,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         opacity: 0.7
-        text: "The topic works like a password: anyone who knows it can send and read notifications. Use randomly-suffixed topics (the installer generates them that way) and share them only within your team."
+        text: page.tr("cfg.privacy")
     }
 
     Item {

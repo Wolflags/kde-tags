@@ -6,9 +6,15 @@
 import QtQuick 2.15
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.core 2.0 as PlasmaCore
+import "i18n.js" as I18n
 
 Item {
     id: root
+
+    readonly property string lang: Plasmoid.configuration.language === "es" ? "es" : "en"
+    function tr(key) {
+        return I18n.t(lang, key);
+    }
 
     readonly property var coworkers: {
         try {
@@ -45,11 +51,11 @@ Item {
     Plasmoid.icon: "dialog-messages"
     Plasmoid.toolTipMainText: "kde-tags"
     Plasmoid.toolTipSubText: count === 0
-        ? "Configure me"
-        : (count === 1 ? "1 coworker" : count + " coworkers")
+        ? tr("tooltip.configure")
+        : (count === 1 ? tr("tooltip.one") : tr("tooltip.many").replace("%1", count))
 
     function senderName() {
-        return String(Plasmoid.configuration.senderName || "").trim() || "A coworker";
+        return String(Plasmoid.configuration.senderName || "").trim() || tr("notif.sender");
     }
 
     // ntfy reads headers as latin-1: titles/tags must stay ASCII, while
@@ -98,12 +104,12 @@ Item {
     }
 
     function requestPresence(coworker, cell, onDone) {
-        sendNtfy(coworker.topic, "Presence request", "wave", "high",
-                 senderName() + " is requesting your presence at their desk", cell, onDone);
+        sendNtfy(coworker.topic, tr("notif.presenceTitle"), "wave", "high",
+                 tr("notif.presenceBody").replace("%1", senderName()), cell, onDone);
     }
 
     function sendMessage(coworker, text, cell, onDone) {
-        sendNtfy(coworker.topic, "New message", "speech_balloon", "",
+        sendNtfy(coworker.topic, tr("notif.messageTitle"), "speech_balloon", "",
                  senderName() + ": " + text, cell, onDone);
     }
 
