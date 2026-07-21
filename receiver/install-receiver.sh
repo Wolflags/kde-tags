@@ -78,16 +78,18 @@ for OLDUNIT in d8tags-receiver teamcall-receiver; do
 done
 
 # 3. Server and personal topic.
+# The `|| true` guards keep a non-interactive stdin (EOF) from aborting under
+# set -e; the value then falls through to its default.
 if [ -z "$SERVER" ]; then
-    read -rp "ntfy server [https://ntfy.sh]: " SERVER
+    read -rp "ntfy server [https://ntfy.sh]: " SERVER || true
     SERVER="${SERVER:-https://ntfy.sh}"
 fi
 if [ -z "$TOPIC" ]; then
     if [ -n "$OLD_TOPIC" ]; then
-        read -rp "Your personal topic [$OLD_TOPIC]: " TOPIC
+        read -rp "Your personal topic [$OLD_TOPIC]: " TOPIC || true
         TOPIC="${TOPIC:-$OLD_TOPIC}"
     else
-        read -rp "Your personal topic (empty = generate a random one): " TOPIC
+        read -rp "Your personal topic (empty = generate a random one): " TOPIC || true
         if [ -z "$TOPIC" ]; then
             # head first and no trailing pipe: avoids the SIGPIPE that would
             # abort the script under pipefail
@@ -126,7 +128,7 @@ curl -fsS -d "If you can see this, the receiver works" \
 
 # 8. mDNS announcement: show up automatically in widgets on the local network.
 if [ -z "$ANNOUNCE" ] && [ -t 0 ]; then
-    read -rp "Announce yourself on the local network to show up in widgets automatically? [Y/n]: " R
+    read -rp "Announce yourself on the local network to show up in widgets automatically? [Y/n]: " R || true
     case "$R" in
         [nN]*) ANNOUNCE=no ;;
         *)     ANNOUNCE=yes ;;
@@ -147,7 +149,7 @@ elif ! systemctl is-active --quiet avahi-daemon 2>/dev/null; then
     echo "WARNING: avahi-daemon is not active; cannot announce on the LAN." >&2
 else
     if [ -z "$NAME" ] && [ -t 0 ]; then
-        read -rp "Your display name in the widgets [$USER]: " NAME
+        read -rp "Your display name in the widgets [$USER]: " NAME || true
     fi
     NAME="${NAME:-$USER}"
     # Sanitize: no double quotes/backslashes/semicolons (they would break the

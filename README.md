@@ -13,49 +13,58 @@ Requires Plasma 5 (developed and tested on 5.27 / Qt 5.15).
 
 Repository: **https://github.com/Wolflags/kde-tags**
 
+## Install (one command)
+
+Run this on any Plasma 5 machine and you are done — it installs the widget,
+sets up the receiver, installs the LAN-discovery dependency, and drops the
+widget onto your panel next to the system tray:
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Wolflags/kde-tags/main/install.sh)
+```
+
+It will ask for your display name (for the notification and LAN discovery) and
+for your sudo password once (to install `avahi-utils`). Everything else is
+automatic; the topic is generated for you and printed at the end. Re-running
+the command updates an existing install without losing your topic.
+
+Prefer to read the script first? It lives at
+[`install.sh`](install.sh) — download and inspect it, then run `bash install.sh`.
+
+Unattended / custom values (flags are forwarded to the receiver installer):
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Wolflags/kde-tags/main/install.sh) \
+    --name "Ana" --topic my-secret-topic-x7k2 --server https://ntfy.sh
+# or --no-announce to skip the mDNS LAN announcement
+```
+
 ## Layout
 
+- `install.sh` — the one-command installer (widget + receiver + panel placement).
 - `package/` — the plasmoid (`com.josej.kdetags`): QML + config.
 - `receiver/` — what each coworker installs to receive notifications (ntfy + notify-send + systemd user service). See `receiver/README.md`.
 
-## 1. Download
+## Manual installation (advanced)
 
-Everything starts by cloning this repository (both for the widget and the receiver):
+If you would rather do it step by step:
 
 ```sh
 git clone https://github.com/Wolflags/kde-tags.git
 cd kde-tags
-```
 
-## 2. Install the widget (whoever sends notifications)
-
-From the cloned folder:
-
-```sh
-# first time
-kpackagetool5 -t Plasma/Applet -i package
-
-# to update (after a git pull or editing files)
-kpackagetool5 -t Plasma/Applet -u package
-
-# Plasma caches the QML: restart plasmashell after installing/updating
+# widget (whoever sends notifications)
+kpackagetool5 -t Plasma/Applet -i package      # -u to update
 systemctl --user restart plasma-plasmashell.service
-```
+# then: right-click the panel → Add Widgets → kde-tags,
+# and in edit mode drag it next to the system tray.
 
-Then: right-click the panel → *Add Widgets* → **kde-tags**.
-To keep it next to the network/volume icons: in panel edit mode, drag the
-widget right up against the system tray.
-
-## 3. Install the receiver (whoever receives notifications)
-
-From the cloned folder, on each coworker's machine:
-
-```sh
+# receiver (whoever receives notifications), on each machine
 cd receiver
 ./install-receiver.sh
 ```
 
-The installer downloads ntfy if needed, asks for the server (Enter =
+The receiver installer downloads ntfy if needed, asks for the server (Enter =
 `https://ntfy.sh`) and your personal topic, leaves the
 `kde-tags-receiver.service` running and sends a test notification. At the end
 it prints the topic: **that is the value to share** with anyone who should be
