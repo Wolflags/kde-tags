@@ -25,8 +25,21 @@ MouseArea {
     onClicked: Plasmoid.expanded = !wasExpanded
 
     PlasmaCore.IconItem {
+        id: icon
         anchors.fill: parent
         source: Plasmoid.icon
         active: compactRoot.containsMouse
+        // Dimmed when offline.
+        opacity: root.offline ? 0.5 : 1.0
+    }
+
+    // Offline badge: a small grey "user-offline" mark in the corner.
+    PlasmaCore.IconItem {
+        visible: root.offline
+        source: "user-offline"
+        width: Math.round(parent.width * 0.5)
+        height: width
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
     }
 }

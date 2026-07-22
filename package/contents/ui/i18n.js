@@ -11,6 +11,14 @@ var M = {
     "tooltip.configure":    { en: "Configure me",             es: "Configúrame" },
     "tooltip.one":          { en: "1 coworker",               es: "1 compañero" },
     "tooltip.many":         { en: "%1 coworkers",             es: "%1 compañeros" },
+    "tooltip.offline":      { en: "Offline",                  es: "Sin conexión" },
+
+    // Offline mode
+    "popup.goOffline":      { en: "Go offline",               es: "Ponerse offline" },
+    "popup.goOnline":       { en: "Go online",                es: "Volver a online" },
+    "popup.offlineTitle":   { en: "You're offline",           es: "Estás offline" },
+    "popup.offlineHelp":    { en: "Not announced on the network and not receiving notifications. Your coworkers can't see you.",
+                              es: "No te anuncias en la red ni recibes notificaciones. Tus compañeros no te ven." },
 
     // Notification content. The title is the sender's name (goes via the ntfy
     // ?title= query param, so UTF-8 is fine); this is only the presence body.

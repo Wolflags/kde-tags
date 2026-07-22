@@ -93,9 +93,10 @@ PlasmaExtras.Representation {
                 id: searchField
 
                 Layout.fillWidth: true
+                visible: !root.offline
                 placeholderText: root.tr("popup.search")
                 // Re-evaluated on every open → the search field grabs focus
-                focus: Plasmoid.expanded
+                focus: Plasmoid.expanded && !root.offline
                 onAccepted: {
                     // Enter with a single match: select it and jump to the message
                     if (fullRep.shownRoster.length === 1) {
@@ -103,6 +104,25 @@ PlasmaExtras.Representation {
                         messageField.forceActiveFocus();
                     }
                 }
+            }
+
+            // Title shown in place of the search field when offline.
+            PlasmaExtras.Heading {
+                Layout.fillWidth: true
+                visible: root.offline
+                level: 4
+                text: "kde-tags"
+                elide: Text.ElideRight
+            }
+
+            // Online/offline toggle.
+            PlasmaComponents3.ToolButton {
+                icon.name: root.offline ? "user-offline" : "user-online"
+                checkable: true
+                checked: !root.offline
+                onClicked: root.setOffline(!root.offline)
+                PlasmaComponents3.ToolTip.text: root.offline ? root.tr("popup.goOnline") : root.tr("popup.goOffline")
+                PlasmaComponents3.ToolTip.visible: hovered
             }
 
             PlasmaComponents3.ToolButton {
@@ -121,7 +141,7 @@ PlasmaExtras.Representation {
             id: scroll
 
             anchors.fill: parent
-            visible: fullRep.shownRoster.length > 0
+            visible: !root.offline && fullRep.shownRoster.length > 0
             contentWidth: availableWidth // vertical scrolling only
 
             Item {
@@ -160,7 +180,7 @@ PlasmaExtras.Representation {
         PlasmaExtras.PlaceholderMessage {
             anchors.centerIn: parent
             width: parent.width - PlasmaCore.Units.gridUnit * 2
-            visible: root.count === 0
+            visible: !root.offline && root.count === 0
             iconName: "dialog-messages"
             text: root.tr("popup.empty")
             helpfulAction: QQC2.Action {
@@ -173,13 +193,29 @@ PlasmaExtras.Representation {
         PlasmaExtras.PlaceholderMessage {
             anchors.centerIn: parent
             width: parent.width - PlasmaCore.Units.gridUnit * 2
-            visible: root.count > 0 && fullRep.shownRoster.length === 0
+            visible: !root.offline && root.count > 0 && fullRep.shownRoster.length === 0
             iconName: "edit-none"
             text: root.tr("popup.noMatches")
+        }
+
+        // Offline state: whole widget is inactive until back online.
+        PlasmaExtras.PlaceholderMessage {
+            anchors.centerIn: parent
+            width: parent.width - PlasmaCore.Units.gridUnit * 2
+            visible: root.offline
+            iconName: "user-offline"
+            text: root.tr("popup.offlineTitle")
+            explanation: root.tr("popup.offlineHelp")
+            helpfulAction: QQC2.Action {
+                icon.name: "user-online"
+                text: root.tr("popup.goOnline")
+                onTriggered: root.setOffline(false)
+            }
         }
     }
 
     footer: PlasmaExtras.PlasmoidHeading {
+        visible: !root.offline
         contentItem: ColumnLayout {
             spacing: PlasmaCore.Units.smallSpacing
 

@@ -46,13 +46,40 @@ Item {
     }
     readonly property int count: roster.length
 
+    // Offline mode: not announced on the LAN, not receiving notifications, and
+    // the popup grid + sending are hidden until back online.
+    readonly property bool offline: Plasmoid.configuration.offline === true
+
     Plasmoid.switchWidth: PlasmaCore.Units.gridUnit * 12
     Plasmoid.switchHeight: PlasmaCore.Units.gridUnit * 10
     Plasmoid.icon: "dialog-messages"
     Plasmoid.toolTipMainText: "kde-tags"
-    Plasmoid.toolTipSubText: count === 0
-        ? tr("tooltip.configure")
-        : (count === 1 ? tr("tooltip.one") : tr("tooltip.many").replace("%1", count))
+    Plasmoid.toolTipSubText: offline
+        ? tr("tooltip.offline")
+        : (count === 0
+            ? tr("tooltip.configure")
+            : (count === 1 ? tr("tooltip.one") : tr("tooltip.many").replace("%1", count)))
+
+    // Stop/start the receiver + announce user services and toggle the grid.
+    PlasmaCore.DataSource {
+        id: serviceRunner
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => disconnectSource(sourceName)
+    }
+    function setOffline(value) {
+        Plasmoid.configuration.offline = value;
+        var units = "kde-tags-receiver.service kde-tags-announce.service";
+        // disable/enable so the choice persists across restarts.
+        serviceRunner.connectSource(value
+            ? "systemctl --user disable --now " + units
+            : "systemctl --user enable --now " + units);
+        if (value) {
+            discovered = [];
+        } else {
+            discoverNow();
+        }
+    }
 
     function senderName() {
         return String(Plasmoid.configuration.senderName || "").trim() || tr("notif.sender");
@@ -143,7 +170,7 @@ Item {
     }
 
     function discoverNow() {
-        if (Plasmoid.configuration.lanDiscovery !== true) {
+        if (offline || Plasmoid.configuration.lanDiscovery !== true) {
             return;
         }
         if (discoverySource.connectedSources.length > 0) {

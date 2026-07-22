@@ -25,5 +25,9 @@
             <label>UI language: "en" (English) or "es" (Spanish).</label>
             <default>en</default>
         </entry>
+        <entry name="offline" type="Bool">
+            <label>Offline mode: stop announcing on the LAN and receiving notifications.</label>
+            <default>false</default>
+        </entry>
     </group>
 </kcfg>
