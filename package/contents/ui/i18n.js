@@ -12,12 +12,11 @@ var M = {
     "tooltip.one":          { en: "1 coworker",               es: "1 compañero" },
     "tooltip.many":         { en: "%1 coworkers",             es: "%1 compañeros" },
 
-    // Notification content (titles must stay ASCII; both languages already are)
+    // Notification content. The title is the sender's name (goes via the ntfy
+    // ?title= query param, so UTF-8 is fine); this is only the presence body.
     "notif.sender":         { en: "A coworker",               es: "Un compañero" },
-    "notif.presenceTitle":  { en: "Presence request",         es: "Solicitud de presencia" },
-    "notif.presenceBody":   { en: "%1 is requesting your presence at their desk",
-                              es: "%1 solicita tu presencia en su escritorio" },
-    "notif.messageTitle":   { en: "New message",              es: "Mensaje nuevo" },
+    "notif.presenceBody":   { en: "Requests your presence at their desk",
+                              es: "Solicita tu presencia en su escritorio" },
 
     // Popup
     "popup.search":         { en: "Search coworker…",         es: "Buscar compañero…" },

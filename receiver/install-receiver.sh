@@ -126,7 +126,18 @@ echo "Sending test notification..."
 curl -fsS -d "If you can see this, the receiver works" \
     -H "X-Title: kde-tags ready" -H "X-Tags: wave" "$SERVER/$TOPIC" >/dev/null
 
-# 8. mDNS announcement: show up automatically in widgets on the local network.
+# 8. Resolve the display name (used both as the widget's sender name and for the
+#    mDNS announcement) and save it so the widget can adopt it automatically.
+if [ -z "$NAME" ] && [ -t 0 ]; then
+    read -rp "Your display name [$USER]: " NAME || true
+fi
+NAME="${NAME:-$USER}"
+# Sanitize: no double quotes/backslashes/semicolons (they would break the unit
+# or the avahi-browse output format) and no control characters.
+NAME="$(printf '%s' "$NAME" | tr -d '"\\;' | tr -d '\n\r\t')"
+printf '%s' "$NAME" > "$CONF_DIR/name"
+
+# 9. mDNS announcement: show up automatically in widgets on the local network.
 if [ -z "$ANNOUNCE" ] && [ -t 0 ]; then
     read -rp "Announce yourself on the local network to show up in widgets automatically? [Y/n]: " R || true
     case "$R" in
@@ -148,13 +159,7 @@ elif ! command -v avahi-publish >/dev/null 2>&1; then
 elif ! systemctl is-active --quiet avahi-daemon 2>/dev/null; then
     echo "WARNING: avahi-daemon is not active; cannot announce on the LAN." >&2
 else
-    if [ -z "$NAME" ] && [ -t 0 ]; then
-        read -rp "Your display name in the widgets [$USER]: " NAME || true
-    fi
-    NAME="${NAME:-$USER}"
-    # Sanitize: no double quotes/backslashes/semicolons (they would break the
-    # unit or the avahi-browse output format) and no control characters.
-    NAME="$(printf '%s' "$NAME" | tr -d '"\\;' | tr -d '\n\r\t')"
+    # $NAME is already resolved and sanitized above (step 8).
     # systemd escaping: % and $ are special in ExecStart.
     NAME_UNIT="${NAME//%/%%}"
     NAME_UNIT="${NAME_UNIT//\$/\$\$}"

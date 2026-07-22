@@ -58,8 +58,9 @@ Item {
         return String(Plasmoid.configuration.senderName || "").trim() || tr("notif.sender");
     }
 
-    // ntfy reads headers as latin-1: titles/tags must stay ASCII, while
-    // UTF-8 text (names, accents) travels in the body.
+    // The title travels as a query param (?title=, URL-encoded) so names with
+    // accents survive — the X-Title header is latin-1 only. Tags/priority stay
+    // as ASCII headers; the body (UTF-8) goes in xhr.send().
     function sendNtfy(topic, title, tags, priority, body, cell, onDone) {
         if (cell.callState === "sending") {
             return;
@@ -75,8 +76,11 @@ Item {
             return;
         }
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", base + "/" + encodeURIComponent(cleanTopic));
-        xhr.setRequestHeader("X-Title", title);
+        let url = base + "/" + encodeURIComponent(cleanTopic);
+        if (String(title).length > 0) {
+            url += "?title=" + encodeURIComponent(title);
+        }
+        xhr.open("POST", url);
         xhr.setRequestHeader("X-Tags", tags);
         if (priority !== "") {
             xhr.setRequestHeader("X-Priority", priority);
@@ -103,14 +107,16 @@ Item {
         }
     }
 
+    // Title = sender's name in both cases (the receiver prepends the tag emoji,
+    // e.g. "👋 Pedro" / "💬 Pedro"); the detail/text goes in the body.
     function requestPresence(coworker, cell, onDone) {
-        sendNtfy(coworker.topic, tr("notif.presenceTitle"), "wave", "high",
-                 tr("notif.presenceBody").replace("%1", senderName()), cell, onDone);
+        sendNtfy(coworker.topic, senderName(), "wave", "high",
+                 tr("notif.presenceBody"), cell, onDone);
     }
 
     function sendMessage(coworker, text, cell, onDone) {
-        sendNtfy(coworker.topic, tr("notif.messageTitle"), "speech_balloon", "",
-                 senderName() + ": " + text, cell, onDone);
+        sendNtfy(coworker.topic, senderName(), "speech_balloon", "",
+                 text, cell, onDone);
     }
 
     // --- mDNS (Avahi) discovery on the local network ---
@@ -233,7 +239,28 @@ Item {
         }
     }
 
-    Component.onCompleted: discoverNow()
+    // If no sender name is set yet, adopt the one chosen during installation
+    // (written to ~/.config/kde-tags/name by the receiver installer).
+    PlasmaCore.DataSource {
+        id: nameSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            const n = String(data["stdout"] || "").trim();
+            if (n !== "" && String(Plasmoid.configuration.senderName || "").trim() === "") {
+                Plasmoid.configuration.senderName = n;
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        discoverNow();
+        if (String(Plasmoid.configuration.senderName || "").trim() === "") {
+            nameSource.connectSource("cat \"$HOME/.config/kde-tags/name\" 2>/dev/null");
+        }
+    }
 
     Plasmoid.compactRepresentation: CompactRepresentation { }
     Plasmoid.fullRepresentation: FullRepresentation { }
