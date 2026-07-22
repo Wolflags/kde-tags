@@ -39,9 +39,22 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Wolflags/kde-tags/main/insta
 # or --no-announce to skip the mDNS LAN announcement
 ```
 
+## Uninstall
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Wolflags/kde-tags/main/uninstall.sh)
+```
+
+Removes the widget from the panel, uninstalls the plasmoid, stops and deletes
+the receiver/announce services, and deletes `~/.config/kde-tags` and the
+notification helper. It **keeps** the `ntfy` binary (in case something else
+uses it) and the source checkout; the command at the end tells you how to
+remove those too. Also runnable from a clone as `bash uninstall.sh`.
+
 ## Layout
 
 - `install.sh` — the one-command installer (widget + receiver + panel placement).
+- `uninstall.sh` — the uninstaller.
 - `package/` — the plasmoid (`com.josej.kdetags`): QML + config.
 - `receiver/` — what each coworker installs to receive notifications (ntfy + notify-send + systemd user service). See `receiver/README.md`.
 
@@ -123,6 +136,10 @@ Notes:
    error (no network, bad server, 10 s timeout). The draft is only cleared if
    the send succeeded.
 
+The coworker sees your **name in the notification title** (e.g. "👋 Pedro" for
+a presence request, "💬 Pedro" for a message). Your name is taken from the one
+you chose at install time; change it anytime under Settings → Your name.
+
 ## Settings
 
 Gear button in the popup (or right-click → *Configure kde-tags*):
@@ -130,7 +147,8 @@ Gear button in the popup (or right-click → *Configure kde-tags*):
 - **Language** — English or Español; translates the whole interface (and the
   notifications you send) for this user. Default: English.
 - **ntfy server** — `https://ntfy.sh` or your own server.
-- **Your name** — shown in the coworker's notification.
+- **Your name** — shown as the title of the coworker's notification;
+  pre-filled from the name you chose during installation.
 - **Local network** — toggle for automatic mDNS discovery.
 - **Coworkers** — name + ntfy topic for each one (the topic comes from their
   `install-receiver.sh`). Topics from older versions (`teamcall-*`) keep
