@@ -12,6 +12,10 @@ import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.plasma.extras 2.0 as PlasmaExtras
 
+// Representation is a QQC2 Page: the body goes in the contentItem slot (which the
+// Page sizes between header and footer — never anchor it) and the send bar goes in
+// the footer slot (a hidden footer frees its space, so offline the content fills
+// the popup and the placeholder centres cleanly).
 PlasmaExtras.Representation {
     id: fullRep
 
@@ -37,6 +41,25 @@ PlasmaExtras.Representation {
     // popup does not resize while typing in the search field.
     readonly property int gridColumns: Math.max(1, Math.min(4, Math.ceil(Math.sqrt(root.count))))
     readonly property int gridRowsAll: Math.max(1, Math.ceil(root.count / gridColumns))
+
+    // Height of the coworker grid alone (no header/footer).
+    readonly property int gridContentHeight:
+        Math.min(gridRowsAll, 4) * (cellHeight + PlasmaCore.Units.smallSpacing)
+        + PlasmaCore.Units.smallSpacing * 3
+
+    readonly property bool showingGrid: !root.offline && shownRoster.length > 0
+
+    // Height the currently-visible body needs. The placeholders are tall (KDE's
+    // huge icon), so the popup is sized to whichever one is shown rather than to
+    // a guessed constant — otherwise the offline "Go online" button, or the empty
+    // message, gets clipped.
+    readonly property int contentNeeded: showingGrid
+        ? gridContentHeight
+        : (root.offline
+            ? offlinePlaceholder.implicitHeight
+            : (root.count === 0
+                ? emptyPlaceholder.implicitHeight
+                : noMatchPlaceholder.implicitHeight))
 
     // Selection by topic: survives filtering and roster reordering.
     property string selectedTopic: ""
@@ -65,14 +88,22 @@ PlasmaExtras.Representation {
     focus: true
 
     Layout.minimumWidth: PlasmaCore.Units.gridUnit * 14
-    Layout.preferredWidth: Math.max(Layout.minimumWidth,
-        gridColumns * cellWidth + (gridColumns + 3) * PlasmaCore.Units.smallSpacing)
+    // Offline: a bit wider so the huge placeholder icon breathes and the
+    // explanation wraps in fewer lines. Online: sized to the coworker grid.
+    Layout.preferredWidth: root.offline
+        ? PlasmaCore.Units.gridUnit * 18
+        : Math.max(Layout.minimumWidth,
+            gridColumns * cellWidth + (gridColumns + 3) * PlasmaCore.Units.smallSpacing)
     Layout.maximumWidth: PlasmaCore.Units.gridUnit * 26
     Layout.minimumHeight: PlasmaCore.Units.gridUnit * 10
+    // Grow to fit the visible body (grid or placeholder) plus the header and, when
+    // online, the footer. A hidden footer frees its space, so offline the whole
+    // placeholder — including its "Go online" button — fits under the header.
     Layout.preferredHeight: Math.min(Layout.maximumHeight, Math.max(Layout.minimumHeight,
-        Math.min(gridRowsAll, 4) * (cellHeight + PlasmaCore.Units.smallSpacing)
-        + PlasmaCore.Units.smallSpacing * 3
-        + (header ? header.implicitHeight : 0) + (footer ? footer.implicitHeight : 0)))
+        contentNeeded
+        + (header && header.visible ? header.implicitHeight : 0)
+        + (footer && footer.visible ? footer.implicitHeight : 0)
+        + PlasmaCore.Units.gridUnit * 2))
     Layout.maximumHeight: PlasmaCore.Units.gridUnit * 26
 
     // On popup open: clear search and selection (property observer, because
@@ -134,9 +165,9 @@ PlasmaExtras.Representation {
         }
     }
 
-    Item {
-        anchors.fill: parent
-
+    // Body: grid or one of the placeholders. The Page sizes this Item between the
+    // header and footer — it must NOT be anchored.
+    contentItem: Item {
         PlasmaComponents3.ScrollView {
             id: scroll
 
@@ -178,6 +209,8 @@ PlasmaExtras.Representation {
         }
 
         PlasmaExtras.PlaceholderMessage {
+            id: emptyPlaceholder
+
             anchors.centerIn: parent
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: !root.offline && root.count === 0
@@ -191,6 +224,8 @@ PlasmaExtras.Representation {
         }
 
         PlasmaExtras.PlaceholderMessage {
+            id: noMatchPlaceholder
+
             anchors.centerIn: parent
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: !root.offline && root.count > 0 && fullRep.shownRoster.length === 0
@@ -200,6 +235,8 @@ PlasmaExtras.Representation {
 
         // Offline state: whole widget is inactive until back online.
         PlasmaExtras.PlaceholderMessage {
+            id: offlinePlaceholder
+
             anchors.centerIn: parent
             width: parent.width - PlasmaCore.Units.gridUnit * 2
             visible: root.offline
@@ -214,8 +251,12 @@ PlasmaExtras.Representation {
         }
     }
 
+    // Send controls: a footer bar. Hidden — and space-free — when offline, so the
+    // body fills the whole popup and the offline placeholder centres.
     footer: PlasmaExtras.PlasmoidHeading {
         visible: !root.offline
+        position: PlasmaExtras.PlasmoidHeading.Footer
+
         contentItem: ColumnLayout {
             spacing: PlasmaCore.Units.smallSpacing
 
