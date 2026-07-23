@@ -122,11 +122,18 @@ systemctl --user daemon-reload
 systemctl --user enable kde-tags-receiver.service
 systemctl --user restart kde-tags-receiver.service
 
-# 7. Self-test: the notification should show up within a few seconds.
+# 7. Self-test: the notification should show up within a few seconds. Best-effort
+#    only — the receiver is already installed, so a failure here (rate limit /
+#    HTTP 429, offline, transient error) must warn, not abort the whole install.
 sleep 2
 echo "Sending test notification..."
-curl -fsS -d "If you can see this, the receiver works" \
-    -H "X-Title: kde-tags ready" -H "X-Tags: wave" "$SERVER/$TOPIC" >/dev/null
+if curl -fsS -d "If you can see this, the receiver works" \
+    -H "X-Title: kde-tags ready" -H "X-Tags: wave" "$SERVER/$TOPIC" >/dev/null 2>&1; then
+    echo "Test notification sent."
+else
+    echo "NOTE: could not send the test notification (server rate limit, or no" >&2
+    echo "      network). The receiver is installed and running regardless." >&2
+fi
 
 # 8. Resolve the display name (used both as the widget's sender name and for the
 #    mDNS announcement) and save it so the widget can adopt it automatically.
