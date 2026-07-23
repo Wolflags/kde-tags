@@ -8,6 +8,11 @@
 #         KDE_TAGS_NAME / KDE_TAGS_ANNOUNCE=no)
 set -euo pipefail
 
+# System login name (e.g. josej): announced over mDNS and shown on hover so a
+# free-text display name can't be used to impersonate someone. Ensure it is set
+# (topic and the announcement instance also rely on $USER).
+USER="${USER:-$(id -un)}"
+
 BIN_DIR="$HOME/.local/bin"
 CONF_DIR="$HOME/.config/kde-tags"
 UNIT_DIR="$HOME/.config/systemd/user"
@@ -112,7 +117,10 @@ mkdir -p "$UNIT_DIR"
 sed "s|@NTFY_BIN@|$NTFY_BIN|g" "$SCRIPT_DIR/kde-tags-receiver.service" \
     > "$UNIT_DIR/kde-tags-receiver.service"
 systemctl --user daemon-reload
-systemctl --user enable --now kde-tags-receiver.service
+# enable + restart (not `enable --now`): restart re-reads the unit so re-running
+# the installer actually applies changes to an already-running service.
+systemctl --user enable kde-tags-receiver.service
+systemctl --user restart kde-tags-receiver.service
 
 # 7. Self-test: the notification should show up within a few seconds.
 sleep 2
@@ -151,15 +159,21 @@ else
     # systemd escaping: % and $ are special in ExecStart.
     NAME_UNIT="${NAME//%/%%}"
     NAME_UNIT="${NAME_UNIT//\$/\$\$}"
+    USER_UNIT="${USER//%/%%}"
+    USER_UNIT="${USER_UNIT//\$/\$\$}"
     INSTANCE="kde-tags $USER@$(hostname -s)"
     sed -e "s|@AVAHI_PUBLISH@|$(sed_escape "$(command -v avahi-publish)")|g" \
         -e "s|@INSTANCE@|$(sed_escape "$INSTANCE")|g" \
         -e "s|@NAME@|$(sed_escape "$NAME_UNIT")|g" \
         -e "s|@TOPIC@|$(sed_escape "$TOPIC")|g" \
         -e "s|@SERVER@|$(sed_escape "$SERVER")|g" \
+        -e "s|@USER@|$(sed_escape "$USER_UNIT")|g" \
         "$SCRIPT_DIR/kde-tags-announce.service" > "$UNIT_DIR/kde-tags-announce.service"
     systemctl --user daemon-reload
-    systemctl --user enable --now kde-tags-announce.service
+    # enable + restart so a changed announcement (e.g. new TXT fields) takes
+    # effect when re-running the installer, not just on first install.
+    systemctl --user enable kde-tags-announce.service
+    systemctl --user restart kde-tags-announce.service
     echo "Announcing you on the local network as \"$NAME\" (kde-tags-announce service)."
 fi
 

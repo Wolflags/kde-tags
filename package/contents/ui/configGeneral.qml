@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.5 as QQC2
 import QtQuick.Layouts 1.1
+import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.kirigami 2.5 as Kirigami
 import "i18n.js" as I18n
 
@@ -22,7 +23,22 @@ ColumnLayout {
         return I18n.t(uiLang, key);
     }
 
+    // This machine's system login name, shown read-only so you can see how others
+    // identify you (announced over mDNS and shown in your notification title).
+    property string systemUser: ""
+
     spacing: Kirigami.Units.largeSpacing
+
+    PlasmaCore.DataSource {
+        id: userSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            page.systemUser = String(data["stdout"] || "").trim();
+        }
+    }
 
     ListModel {
         id: coworkerModel
@@ -31,6 +47,7 @@ ColumnLayout {
     Component.onCompleted: {
         // Preselect the stored language in the combo.
         languageCombo.currentIndex = (cfg_language === "es") ? 1 : 0;
+        userSource.connectSource("id -un");
         try {
             const parsed = JSON.parse(cfg_coworkers);
             if (Array.isArray(parsed)) {
@@ -77,6 +94,12 @@ ColumnLayout {
 
             Kirigami.FormData.label: page.tr("cfg.yourName")
             placeholderText: page.tr("cfg.yourNamePlaceholder")
+        }
+
+        QQC2.Label {
+            Kirigami.FormData.label: page.tr("cfg.systemUser")
+            text: page.systemUser === "" ? "—" : page.systemUser
+            opacity: 0.8
         }
 
         QQC2.CheckBox {

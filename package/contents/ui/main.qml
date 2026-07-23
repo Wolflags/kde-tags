@@ -81,8 +81,24 @@ Item {
         }
     }
 
+    // This machine's system login name (e.g. josej), resolved live via `id -un`
+    // in Component.onCompleted. Travels in the notification title so a free-text
+    // display name can't be used to impersonate someone.
+    property string systemUser: ""
+
     function senderName() {
         return String(Plasmoid.configuration.senderName || "").trim() || tr("notif.sender");
+    }
+
+    // Notification title = display name, with the system user appended when it
+    // adds information (skip when empty or identical to the name).
+    function senderTitle() {
+        var n = senderName();
+        var u = systemUser.trim();
+        if (u === "" || u.toLowerCase() === n.toLowerCase()) {
+            return n;
+        }
+        return n + " (" + u + ")";
     }
 
     // The title travels as a query param (?title=, URL-encoded) so names with
@@ -137,12 +153,12 @@ Item {
     // Title = sender's name in both cases (the receiver prepends the tag emoji,
     // e.g. "👋 Pedro" / "💬 Pedro"); the detail/text goes in the body.
     function requestPresence(coworker, cell, onDone) {
-        sendNtfy(coworker.topic, senderName(), "wave", "high",
+        sendNtfy(coworker.topic, senderTitle(), "wave", "high",
                  tr("notif.presenceBody"), cell, onDone);
     }
 
     function sendMessage(coworker, text, cell, onDone) {
-        sendNtfy(coworker.topic, senderName(), "speech_balloon", "",
+        sendNtfy(coworker.topic, senderTitle(), "speech_balloon", "",
                  text, cell, onDone);
     }
 
@@ -237,6 +253,7 @@ Item {
             found[topic] = {
                 name: String(kv.name || "").trim() || topic,
                 topic: topic,
+                user: String(kv.user || "").trim(),
                 discovered: true
             };
         }
@@ -282,6 +299,18 @@ Item {
         }
     }
 
+    // This machine's system login name for the notification title (anti-impersonation).
+    PlasmaCore.DataSource {
+        id: userSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            root.systemUser = String(data["stdout"] || "").trim();
+        }
+    }
+
     Component.onCompleted: {
         // Make the services match the saved online/offline state (idempotent;
         // harmless if the receiver isn't installed — exit code is ignored).
@@ -293,6 +322,7 @@ Item {
         if (String(Plasmoid.configuration.senderName || "").trim() === "") {
             nameSource.connectSource("cat \"$HOME/.config/kde-tags/name\" 2>/dev/null");
         }
+        userSource.connectSource("id -un");
     }
 
     Plasmoid.compactRepresentation: CompactRepresentation { }

@@ -28,7 +28,9 @@ The script:
    the local network with the `kde-tags-announce.service` unit: you automatically show up,
    with your name and initials, in the widget of any coworker on your LAN.
    Requires `avahi-utils` (`sudo apt install avahi-utils`); if missing, it warns and
-   continues without announcing.
+   continues without announcing. The announcement's TXT record carries `name`, `topic`,
+   `server` and your **system user** (`user`, e.g. `josej`); the widget shows that system
+   user on hover so a free-text display name can't be used to impersonate someone.
 
 At the end it prints your topic: **share it with your team** — it is what they
 put in the widget to be able to reach you.

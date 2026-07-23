@@ -38,6 +38,7 @@ var M = {
     "popup.sendMessage":    { en: "Send message",             es: "Enviar mensaje" },
 
     // Coworker cell
+    "cell.systemUser":      { en: "System user: %1",          es: "Usuario del sistema: %1" },
     "cell.couldNotSend":    { en: "Could not send",           es: "No se pudo enviar" },
     "cell.detected":        { en: "Detected on local network · ",
                               es: "Detectado en la red local · " },
@@ -47,6 +48,7 @@ var M = {
 
     // Settings page
     "cfg.language":         { en: "Language:",                es: "Idioma:" },
+    "cfg.systemUser":       { en: "System user:",             es: "Usuario del sistema:" },
     "cfg.server":           { en: "ntfy server:",             es: "Servidor ntfy:" },
     "cfg.yourName":         { en: "Your name:",               es: "Tu nombre:" },
     "cfg.yourNamePlaceholder": { en: "How your coworkers will see you",

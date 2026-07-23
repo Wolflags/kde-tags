@@ -22,6 +22,9 @@ PlasmaCore.ToolTipArea {
 
     readonly property bool discovered: !!coworker && coworker.discovered === true
     readonly property string coworkerName: String(coworker.name || "")
+    // System login name, only present for LAN-discovered coworkers (announced
+    // from their own machine): shown on hover as an anti-impersonation signal.
+    readonly property string sysUser: String((coworker && coworker.user) || "").trim()
     readonly property string initials: {
         const name = coworkerName.trim();
         if (name === "") {
@@ -36,10 +39,17 @@ PlasmaCore.ToolTipArea {
     readonly property color hlCol: PlasmaCore.Theme.highlightColor
 
     mainText: coworkerName
-    subText: callState === "error"
-        ? root.tr("cell.couldNotSend")
-        : (discovered ? root.tr("cell.detected") : "")
-          + (selected ? root.tr("cell.selected") : root.tr("cell.clickToSelect"))
+    subText: {
+        if (callState === "error") {
+            return root.tr("cell.couldNotSend");
+        }
+        var status = (discovered ? root.tr("cell.detected") : "")
+            + (selected ? root.tr("cell.selected") : root.tr("cell.clickToSelect"));
+        if (sysUser !== "") {
+            return root.tr("cell.systemUser").replace("%1", sysUser) + "\n" + status;
+        }
+        return status;
+    }
 
     function beginCall(xhr) {
         activeXhr = xhr;
