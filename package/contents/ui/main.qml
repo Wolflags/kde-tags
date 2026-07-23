@@ -283,6 +283,12 @@ Item {
     }
 
     Component.onCompleted: {
+        // Make the services match the saved online/offline state (idempotent;
+        // harmless if the receiver isn't installed — exit code is ignored).
+        var units = "kde-tags-receiver.service kde-tags-announce.service";
+        serviceRunner.connectSource(offline
+            ? "systemctl --user disable --now " + units
+            : "systemctl --user enable --now " + units);
         discoverNow();
         if (String(Plasmoid.configuration.senderName || "").trim() === "") {
             nameSource.connectSource("cat \"$HOME/.config/kde-tags/name\" 2>/dev/null");
