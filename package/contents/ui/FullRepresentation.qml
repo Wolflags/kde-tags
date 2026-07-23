@@ -281,8 +281,10 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "user-available"
-                    text: root.tr("popup.requestPresence")
-                    enabled: fullRep.selectedCoworker !== null
+                    text: root.sendCoolingDown
+                        ? root.tr("popup.wait").replace("%1", root.sendCooldownRemaining)
+                        : root.tr("popup.requestPresence")
+                    enabled: fullRep.selectedCoworker !== null && !root.sendCoolingDown
                     onClicked: {
                         const cell = fullRep.selectedCell();
                         if (cell) {
@@ -299,9 +301,12 @@ PlasmaExtras.Representation {
 
                     Layout.fillWidth: true
                     icon.name: "document-send"
-                    text: root.tr("popup.sendMessage")
+                    text: root.sendCoolingDown
+                        ? root.tr("popup.wait").replace("%1", root.sendCooldownRemaining)
+                        : root.tr("popup.sendMessage")
                     enabled: fullRep.selectedCoworker !== null
                              && messageField.text.trim().length > 0
+                             && !root.sendCoolingDown
                     onClicked: {
                         const target = fullRep.selectedCell() || dummyCell;
                         if (fullRep.selectedCoworker) {

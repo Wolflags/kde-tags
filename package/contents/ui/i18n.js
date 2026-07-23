@@ -36,6 +36,7 @@ var M = {
                               es: "Mensaje (opcional, para \"Enviar mensaje\")" },
     "popup.requestPresence":{ en: "Request presence",         es: "Solicitar presencia" },
     "popup.sendMessage":    { en: "Send message",             es: "Enviar mensaje" },
+    "popup.wait":           { en: "Wait %1 s",                es: "Espera %1 s" },
 
     // Coworker cell
     "cell.systemUser":      { en: "System user: %1",          es: "Usuario del sistema: %1" },

@@ -101,11 +101,39 @@ Item {
         return n + " (" + u + ")";
     }
 
+    // Anti-spam: after a send (message or presence) block further sends for a few
+    // seconds. Global — across coworkers and both actions — and surfaced as a
+    // countdown on the send buttons.
+    readonly property int sendCooldownSeconds: 5
+    property int sendCooldownRemaining: 0
+    readonly property bool sendCoolingDown: sendCooldownRemaining > 0
+
+    Timer {
+        id: cooldownTimer
+
+        interval: 1000
+        repeat: true
+        onTriggered: {
+            root.sendCooldownRemaining -= 1;
+            if (root.sendCooldownRemaining <= 0) {
+                stop();
+            }
+        }
+    }
+    function startCooldown() {
+        sendCooldownRemaining = sendCooldownSeconds;
+        cooldownTimer.restart();
+    }
+
     // The title travels as a query param (?title=, URL-encoded) so names with
     // accents survive — the X-Title header is latin-1 only. Tags/priority stay
     // as ASCII headers; the body (UTF-8) goes in xhr.send().
     function sendNtfy(topic, title, tags, priority, body, cell, onDone) {
         if (cell.callState === "sending") {
+            return;
+        }
+        // Anti-spam cooldown (the buttons are disabled too; this is a backstop).
+        if (sendCoolingDown) {
             return;
         }
         const base = String(Plasmoid.configuration.serverUrl || "https://ntfy.sh").replace(/\/+$/, "");
@@ -140,6 +168,7 @@ Item {
             }
         };
         cell.beginCall(xhr);
+        startCooldown(); // begin the anti-spam window as soon as we dispatch
         try {
             xhr.send(body);
         } catch (e) {
