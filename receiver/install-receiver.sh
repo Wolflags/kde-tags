@@ -3,7 +3,8 @@
 # current user, and optionally announces it over mDNS on the local network so
 # you automatically show up in your coworkers' widgets.
 # Usage: ./install-receiver.sh [--topic TOPIC] [--server URL] [--name NAME] [--no-announce]
-#        (interactive without flags; also honors KDE_TAGS_TOPIC / KDE_TAGS_SERVER /
+#        (server, topic and announce default automatically; only the display name
+#         prompts when interactive; also honors KDE_TAGS_TOPIC / KDE_TAGS_SERVER /
 #         KDE_TAGS_NAME / KDE_TAGS_ANNOUNCE=no)
 set -euo pipefail
 
@@ -77,26 +78,19 @@ for OLDUNIT in d8tags-receiver teamcall-receiver; do
     fi
 done
 
-# 3. Server and personal topic.
-# The `|| true` guards keep a non-interactive stdin (EOF) from aborting under
-# set -e; the value then falls through to its default.
-if [ -z "$SERVER" ]; then
-    read -rp "ntfy server [https://ntfy.sh]: " SERVER || true
-    SERVER="${SERVER:-https://ntfy.sh}"
-fi
+# 3. Server and personal topic — resolved automatically, no prompts. Override
+#    with --server/--topic or KDE_TAGS_SERVER/KDE_TAGS_TOPIC if you need to.
+SERVER="${SERVER:-https://ntfy.sh}"
 if [ -z "$TOPIC" ]; then
     if [ -n "$OLD_TOPIC" ]; then
-        read -rp "Your personal topic [$OLD_TOPIC]: " TOPIC || true
-        TOPIC="${TOPIC:-$OLD_TOPIC}"
+        TOPIC="$OLD_TOPIC"
+        echo "Reusing existing topic: $TOPIC"
     else
-        read -rp "Your personal topic (empty = generate a random one): " TOPIC || true
-        if [ -z "$TOPIC" ]; then
-            # head first and no trailing pipe: avoids the SIGPIPE that would
-            # abort the script under pipefail
-            RAND="$(head -c 256 /dev/urandom | tr -dc 'a-z0-9')"
-            TOPIC="kde-tags-$USER-${RAND:0:10}"
-            echo "Generated topic: $TOPIC"
-        fi
+        # head first and no trailing pipe: avoids the SIGPIPE that would
+        # abort the script under pipefail
+        RAND="$(head -c 256 /dev/urandom | tr -dc 'a-z0-9')"
+        TOPIC="kde-tags-$USER-${RAND:0:10}"
+        echo "Generated topic: $TOPIC"
     fi
 fi
 
@@ -137,14 +131,8 @@ NAME="${NAME:-$USER}"
 NAME="$(printf '%s' "$NAME" | tr -d '"\\;' | tr -d '\n\r\t')"
 printf '%s' "$NAME" > "$CONF_DIR/name"
 
-# 9. mDNS announcement: show up automatically in widgets on the local network.
-if [ -z "$ANNOUNCE" ] && [ -t 0 ]; then
-    read -rp "Announce yourself on the local network to show up in widgets automatically? [Y/n]: " R || true
-    case "$R" in
-        [nN]*) ANNOUNCE=no ;;
-        *)     ANNOUNCE=yes ;;
-    esac
-fi
+# 9. mDNS announcement: on by default (no prompt) so you show up automatically in
+#    widgets on the local network. Opt out with --no-announce / KDE_TAGS_ANNOUNCE=no.
 ANNOUNCE="${ANNOUNCE:-yes}"
 
 if [ "$ANNOUNCE" = "no" ]; then

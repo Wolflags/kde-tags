@@ -12,7 +12,7 @@ REPO_TARBALL="https://codeload.github.com/Wolflags/kde-tags/tar.gz/refs/heads/ma
 SRC_HOME="$HOME/.local/share/kde-tags/src"
 WIDGET_ID="com.josej.kdetags"
 
-# Make prompts (name/topic, sudo password) work even under `curl ... | bash`.
+# Make prompts (display name, sudo password) work even under `curl ... | bash`.
 # Probe whether /dev/tty is actually openable (headless has no controlling
 # terminal); only then reattach stdin to it. Silent when there is none.
 if [ ! -t 0 ] && { : < /dev/tty; } 2>/dev/null; then
